@@ -1,16 +1,22 @@
 #include "senderProfile.h"
 
-SenderProfile::SenderProfile(Preferences& pref)
-{
-    pref.begin("user_profile");
+String SenderProfile::fullname = "";
+String SenderProfile::address = "";
+String SenderProfile::contact_number = "";
+String SenderProfile::emergency_contact_person = "";
+String SenderProfile::emergency_contact_number = "";
 
-    fullname                  = pref.getString("fullname", "");
-    address                   = pref.getString("address", "");
-    contact_number            = pref.getString("contact_number", "");
-    emergency_contact_person  = pref.getString("emergency_contact_person", "");
-    emergency_contact_number  = pref.getString("emergency_contact_number", "");
+SenderProfile::SenderProfile()
+{
+    senderPref.begin("user_profile");
+
+    fullname                  = senderPref.getString("fullname", "");
+    address                   = senderPref.getString("address", "");
+    contact_number            = senderPref.getString("contact_number", "");
+    emergency_contact_person  = senderPref.getString("emergency_contact_person", "");
+    emergency_contact_number  = senderPref.getString("emergency_contact_number", "");
     
-    pref.end();
+    senderPref.end();
 }
 
 SenderProfile::~SenderProfile()
@@ -36,4 +42,24 @@ String SenderProfile::toJsonString() {
         json += "}";
 
     return json;
+}
+
+void SenderProfile::setSenderProfile(String fn, String add, String con_num, String em_con_per, String em_con_num) {
+    fullname = fn;
+    address = add;
+    contact_number = con_num;
+    emergency_contact_person = em_con_per;
+    emergency_contact_number = em_con_num;
+    
+    senderPref.begin("user_profile");
+
+    senderPref.putString("fullname", fn);
+    senderPref.putString("address", add);
+    senderPref.putString("contact_number", con_num);
+    senderPref.putString("emergency_contact_person", em_con_per);
+    senderPref.putString("emergency_contact_number", em_con_num);
+
+    senderPref.end();
+
+    return;
 }
