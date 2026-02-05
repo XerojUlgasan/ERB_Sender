@@ -6,6 +6,7 @@
 #include "./class/senderProfile/senderProfile.h"
 
 AsyncWebServer server(80);
+SenderProfile sender; // Global sender object
 
 String appendPostBody(String &body, uint8_t *data, size_t len, size_t index, size_t total);
 bool parseJsonToSenderProfile(String &jsonStr, String &fn, String &add, String &con_num, String &em_con_per, String &em_con_num);
@@ -15,13 +16,12 @@ String vectorToJsonBoolArr(const std::vector<bool>& vec);
 
 bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
 
-  SenderProfile sender;
   Serial.println(sender.toJsonString());
  
   server.on( // TYPE
     "/type", 
     HTTP_GET, 
-    [deviceIsSender, &pref, &sender](AsyncWebServerRequest *request) {
+    [deviceIsSender, &pref](AsyncWebServerRequest *request) {
     String json = "{\"isSender\": " +(String)deviceIsSender + "}";
 
     request->send(
@@ -35,7 +35,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
   server.on(
     "/getProfile", // 204 if no profile, 200 if there's a profile
     HTTP_GET,
-    [&pref, &sender](AsyncWebServerRequest *request){
+    [&pref](AsyncWebServerRequest *request){
 
         if(!sender.checkExist()){
             String json = "{\n\"profile_exist\": false\n}";
@@ -55,16 +55,18 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
   server.on(
     "/setProfile", // SET PROFILE
     HTTP_POST,
-    [&pref, &sender](AsyncWebServerRequest *request, JsonVariant &json){
-
+    [&pref](AsyncWebServerRequest *request, JsonVariant &json){
 
         String fn, add, con_num, em_con_per, em_con_num;
 
         fn = json["fullname"].as<String>();
-        add = fn = json["address"].as<String>();
-        con_num = fn = json["contact_number"].as<String>();
-        em_con_per = fn = json["emergency_contact_person"].as<String>();
-        em_con_num = fn = json["emergency_contact_number"].as<String>();
+        add = json["address"].as<String>();
+        con_num = json["contact_number"].as<String>();
+        em_con_per = json["emergency_contact_person"].as<String>();
+        em_con_num = json["emergency_contact_number"].as<String>();
+
+        Serial.println(em_con_per);
+        Serial.println(em_con_num);
 
         sender.setSenderProfile(fn, add, con_num, em_con_per, em_con_num);
         request->send(200);
@@ -125,6 +127,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
 
           doc["ip"] = WiFi.localIP().toString();
           serializeJson(doc, response);
+          Serial.println("RESPONSEEEEEEEEEEEEEEe : " + response);
           
           request->send(200, "application/json", response);
 

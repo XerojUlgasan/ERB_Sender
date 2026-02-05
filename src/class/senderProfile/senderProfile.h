@@ -13,4 +13,7 @@ class SenderProfile
         bool checkExist();
         String toJsonString();
         void setSenderProfile(String fn, String add, String con_num, String em_con_per, String em_con_num);
+
+        void applyPreferences();
+        void checkPreferences();
 };

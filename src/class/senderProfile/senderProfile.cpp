@@ -8,15 +8,7 @@ String SenderProfile::emergency_contact_number = "";
 
 SenderProfile::SenderProfile()
 {
-    senderPref.begin("user_profile");
-
-    fullname                  = senderPref.getString("fullname", "");
-    address                   = senderPref.getString("address", "");
-    contact_number            = senderPref.getString("contact_number", "");
-    emergency_contact_person  = senderPref.getString("emergency_contact_person", "");
-    emergency_contact_number  = senderPref.getString("emergency_contact_number", "");
-    
-    senderPref.end();
+    applyPreferences();
 }
 
 SenderProfile::~SenderProfile()
@@ -25,6 +17,8 @@ SenderProfile::~SenderProfile()
 }
 
 bool SenderProfile::checkExist() {
+    applyPreferences();
+
     if(fullname.isEmpty() || address.isEmpty() || contact_number.isEmpty() || emergency_contact_number.isEmpty() || emergency_contact_person.isEmpty()){
         return false;
     }else{
@@ -56,10 +50,37 @@ void SenderProfile::setSenderProfile(String fn, String add, String con_num, Stri
     senderPref.putString("fullname", fn);
     senderPref.putString("address", add);
     senderPref.putString("contact_number", con_num);
-    senderPref.putString("emergency_contact_person", em_con_per);
-    senderPref.putString("emergency_contact_number", em_con_num);
+    senderPref.putString("em_con_person", em_con_per);
+    senderPref.putString("em_con_number", em_con_num);
 
     senderPref.end();
 
+    return;
+}
+
+void SenderProfile::applyPreferences(){
+    senderPref.begin("user_profile");
+
+    fullname                  = senderPref.getString("fullname", "");
+    address                   = senderPref.getString("address", "");
+    contact_number            = senderPref.getString("contact_number", "");
+    emergency_contact_person  = senderPref.getString("em_con_person", "");
+    emergency_contact_number  = senderPref.getString("em_con_number", "");
+    
+    senderPref.end();
+
+    return;
+}
+
+void SenderProfile::checkPreferences(){
+    senderPref.begin("user_profile");
+
+    Serial.println(senderPref.getString("fullname", ""));
+    Serial.println(senderPref.getString("address", ""));
+    Serial.println(senderPref.getString("contact_number", ""));
+    Serial.println(senderPref.getString("em_con_person", ""));
+    Serial.println(senderPref.getString("em_con_number", ""));
+
+    senderPref.end();
     return;
 }
