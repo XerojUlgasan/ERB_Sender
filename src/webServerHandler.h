@@ -104,32 +104,30 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
         WiFi.mode(WIFI_AP_STA);
         WiFi.begin(ssid, pass);
 
-        Serial.println("Connecting...");
-        while (WiFi.status() != WL_CONNECTED) {
-          delay(500);
-          Serial.print(".");
-        }
+        String response;
+        JsonDocument doc;
+        
+        request->send(200);
+      }
+    );
 
-        Serial.println("Attempting");
-        if (WiFi.status() == WL_CONNECTED) {
-          Serial.print("WiFi is connected to: ");
-          Serial.println(WiFi.SSID());
-          Serial.println(WiFi.localIP());
+    server.on(
+      "/wifiStatus",
+      HTTP_GET,
+      [](AsyncWebServerRequest *request){
+        String jsonString;
+        JsonDocument doc;
+        doc["ssid"] = WiFi.SSID();
+        doc["isConnected"] = (WiFi.status() == WL_CONNECTED) ? true : false;
+        doc["ip"] = WiFi.localIP().toString();
 
-          String response;
-          JsonDocument doc;
+        serializeJson(doc, jsonString);
 
-          doc["ip"] = WiFi.localIP().toString();
-          serializeJson(doc, response);
-          Serial.println("RESPONSEEEEEEEEEEEEEEe : " + response);
-          
-          request->send(200, "application/json", response);
-
-          Serial.println("Good");
-        }else{
-          request->send(400);
-          Serial.println("Failed");
-        }
+        request->send(
+          200,
+          "application/json",
+          jsonString
+        );
       }
     );
 

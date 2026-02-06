@@ -8,6 +8,7 @@
 #include "webServerHandler.h"
 
 #include "./class/myGps/MyGps.h"
+#include "class/myLora/MyLora.h"
 
 
 //TODO : Proper sanitation in Senderprofile.setProfile
@@ -16,10 +17,11 @@
 //TODO : Encryption key generation
 //TODO : Encryption key and user recording to cloud database
 
-bool deviceIsSender = true;
+const bool deviceIsSender = true;
 
 Preferences pref;
 MyGps mygps;
+MyLora lora(5, 14, 26);
 
 void setup() {
   esp_task_wdt_init(15, true);
@@ -32,19 +34,21 @@ void setup() {
     Serial.println("Setup Done!");
   }else{
     Serial.println("Setup Failed!");
-  }
+    ESP.restart();
+  } 
   Serial.println("ASDWADASD");
+  lora.startReceive();
 }
 
 void loop() {
-  delay(2000);
-  Serial.println("Loopping check");
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.print("WiFi is connected to: ");
-    Serial.println(WiFi.SSID());
-    Serial.println(WiFi.localIP());
-  }
+  // if (WiFi.status() == WL_CONNECTED) {
+  //   Serial.print("WiFi is connected to: ");
+  //   Serial.println(WiFi.SSID());
+  //   Serial.println(WiFi.localIP());
+  // }
 
   mygps.getLocation();
+  lora.sendPacket("From Sender..............");
+  delay(5000);
 }

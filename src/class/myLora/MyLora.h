@@ -3,8 +3,12 @@
 class MyLora
 {
 private:
-    /* data */
+
 public:
-    MyLora(/* args */);
+    MyLora(int nss, int rst, int dio);
     ~MyLora();
+
+    void sendPacket(String message);
+    void startReceive();
+    void stopReceive();
 };
