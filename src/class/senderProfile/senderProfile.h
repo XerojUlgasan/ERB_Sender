@@ -17,3 +17,4 @@ class SenderProfile
         void applyPreferences();
         void checkPreferences();
 };
+

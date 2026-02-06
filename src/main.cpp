@@ -7,18 +7,22 @@
 #include "./helpers/wifiHelper.h"
 #include "webServerHandler.h"
 
+#include "./class/myGps/MyGps.h"
+
 
 //TODO : Proper sanitation in Senderprofile.setProfile
+//TODO : Save wifi networks
+//TODO : History endpoint
+//TODO : Encryption key generation
+//TODO : Encryption key and user recording to cloud database
 
 bool deviceIsSender = true;
 
 Preferences pref;
-
-String vectorToString(const std::vector<String>& vec);
-
+MyGps mygps;
 
 void setup() {
-  esp_task_wdt_init(15, true); // 10 second timeout, panic on timeout
+  esp_task_wdt_init(15, true);
 
   WiFi.mode(WIFI_AP);
   WiFi.softAP("ERBriwan", "Malopit123");
@@ -41,4 +45,6 @@ void loop() {
     Serial.println(WiFi.SSID());
     Serial.println(WiFi.localIP());
   }
+
+  mygps.getLocation();
 }
