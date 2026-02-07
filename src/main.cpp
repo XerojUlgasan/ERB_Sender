@@ -50,4 +50,11 @@ void loop() {
 
   // lora.sendPacket(mygps.locationToJsonString());
   // delay(5000);
+  wifi_mode_t mode = WiFi.getMode();
+
+  if (mode == WIFI_AP || mode == WIFI_AP_STA) {
+      Serial.println("SoftAP is running");
+  } else {
+      Serial.println("SoftAP is NOT running");
+  }
 }
