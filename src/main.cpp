@@ -48,7 +48,6 @@ void loop() {
   //   Serial.println(WiFi.localIP());
   // }
 
-  mygps.getLocation();
-  lora.sendPacket("From Sender..............");
+  lora.sendPacket(mygps.locationToJsonString());
   delay(5000);
 }

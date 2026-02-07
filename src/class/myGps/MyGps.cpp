@@ -1,4 +1,8 @@
+#include <Arduino.h>
+#include <ArduinoJson.h>
+
 #include "./MyGps.h"
+
 
 MyGps::MyGps() : GPS(Serial2)
 {
@@ -30,13 +34,59 @@ void MyGps::getLocation() {
         Serial.print("Satellites: ");
         Serial.println(gps.satellites.value());
 
+        Serial.print("loc valid: ");
+        Serial.println(gps.location.isValid());
+
+        Serial.print("alt valid: ");
+        Serial.println(gps.altitude.isValid());
+
+        Serial.print("spd valid: ");
+        Serial.println(gps.speed.isValid());
+
         lat = gps.location.lat();
         lon = gps.location.lng();
         alt = gps.altitude.meters();
         sat = gps.satellites.value();
-
-        if(gps.altitude.isValid()) {
-            Serial.println("VALID ALTITUEDE ::::: " + (String)gps.altitude.meters());
-        }
+        spd = gps.speed.kmph();
+        isLocValid = gps.location.isValid();
+        isAltValid = gps.altitude.isValid();
+        isSpdValid = gps.speed.isValid();
     }
+
+    return;
+}
+
+String MyGps::locationToJsonString(){
+    this->getLocation();
+
+    String jsonString;
+    JsonDocument doc;
+
+    doc["latitude"] = lat;
+    doc["longitude"] = lon;
+    doc["altitude"] = alt;
+    doc["satellite"] = sat;
+    doc["is_location_valid"] = isLocValid;
+    doc["is_altitude_valid"] = isAltValid;
+    doc["is_speed_valid"] = isSpdValid;
+
+    serializeJson(doc, jsonString);
+
+    return jsonString;
+}
+
+JsonDocument MyGps::locationToJson() {
+    this->getLocation();
+
+    JsonDocument doc;
+
+    doc["latitude"] = lat;
+    doc["longitude"] = lon;
+    doc["altitude"] = alt;
+    doc["satellite"] = sat;
+    doc["is_location_valid"] = isLocValid;
+    doc["is_altitude_valid"] = isAltValid;
+    doc["is_speed_valid"] = isSpdValid;
+
+    return doc;
 }
