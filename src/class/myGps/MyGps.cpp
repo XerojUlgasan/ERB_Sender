@@ -21,7 +21,7 @@ void MyGps::getLocation() {
         gps.encode(c);
     }
 
-    if(gps.location.isUpdated() && gps.location.isValid()){
+    if(gps.location.isUpdated()){
         Serial.print("\nLatitude: ");
         Serial.println(gps.location.lat(), 6);
 
