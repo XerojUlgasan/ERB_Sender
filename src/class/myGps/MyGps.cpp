@@ -6,11 +6,15 @@
 
 MyGps::MyGps() : GPS(Serial2)
 {
-    GPS.begin(9600, SERIAL_8N1, RX2, TX2);
+    
 }
 
 MyGps::~MyGps()
 {
+}
+
+void MyGps::begin() {
+    GPS.begin(9600, SERIAL_8N1, RX2, TX2);
 }
 
 void MyGps::getLocation() {

@@ -20,7 +20,7 @@
 const bool deviceIsSender = true;
 
 Preferences pref;
-MyGps mygps;
+MyGps gps;
 MyLora lora(5, 14, 26);
 
 void setup() {
@@ -37,6 +37,9 @@ void setup() {
     ESP.restart();
   } 
   Serial.println("ASDWADASD");
+  
+  gps.begin();
+  lora.begin();
   lora.startReceive();
 }
 
@@ -48,13 +51,6 @@ void loop() {
   //   Serial.println(WiFi.localIP());
   // }
 
-  // lora.sendPacket(mygps.locationToJsonString());
-  // delay(5000);
-  wifi_mode_t mode = WiFi.getMode();
-
-  if (mode == WIFI_AP || mode == WIFI_AP_STA) {
-      Serial.println("SoftAP is running");
-  } else {
-      Serial.println("SoftAP is NOT running");
-  }
+  lora.sendPacket(gps.locationToJsonString());
+  delay(5000);
 }

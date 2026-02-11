@@ -7,7 +7,15 @@ void onReceive(int packetSize);
 
 MyLora::MyLora(int nss, int rst, int dio)
 {
-    LoRa.setPins(nss, rst, dio);
+    _nss = nss;
+    _rst = rst;
+    _dio = dio;
+}
+
+MyLora::~MyLora(){}
+
+void MyLora::begin() {
+    LoRa.setPins(_nss, _rst, _dio);
 
     if(!LoRa.begin(433E6)){
         Serial.println("LoRa init failed!");
@@ -23,8 +31,6 @@ MyLora::MyLora(int nss, int rst, int dio)
 
     Serial.println("LoRa has started...");
 }
-
-MyLora::~MyLora(){}
 
 void MyLora::sendPacket(String message){
 

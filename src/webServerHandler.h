@@ -70,6 +70,15 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
   );
 
   server.on(
+    "/deleteProfile",
+    HTTP_DELETE,
+    [](AsyncWebServerRequest *request) {
+      sender.deleteProfile();
+      request->send(200);
+    }
+  );
+
+  server.on(
     "/detectNetworks", // Returns all network 
     HTTP_GET,
     [](AsyncWebServerRequest *request){
@@ -104,10 +113,29 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
         WiFi.mode(WIFI_AP_STA);
         WiFi.begin(ssid, pass);
 
-        String response;
+        int timeout = 10000; 
+        int elapsed = 0;
+        Serial.println("Connecting...");
+        while (WiFi.status() != WL_CONNECTED && elapsed < timeout) {
+          delay(100);
+          elapsed += 100;
+          Serial.print(".");
+        }
+
+        String jsonString;
         JsonDocument doc;
+        doc["ssid"] = (WiFi.status() == WL_CONNECTED) ? WiFi.SSID() : "Not Connected";
+        doc["isConnected"] = (WiFi.status() == WL_CONNECTED) ? true : false;
+        doc["ip"] = (WiFi.status() == WL_CONNECTED) ? WiFi.localIP().toString() : "192.168.4.1";
+
+        serializeJson(doc, jsonString);
         
-        request->send(200);
+        if (WiFi.status() == WL_CONNECTED) {
+          Serial.println("Connected!");
+          request->send(200, "application/json", jsonString);
+        } else {
+          request->send(400, "application/json", jsonString);
+        }
       }
     );
 

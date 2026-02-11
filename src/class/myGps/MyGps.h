@@ -15,6 +15,7 @@ public:
     MyGps();
     ~MyGps();
 
+    void begin();
     void getLocation();
     String locationToJsonString();
     JsonDocument locationToJson();

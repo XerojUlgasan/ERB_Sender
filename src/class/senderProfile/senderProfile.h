@@ -14,6 +14,7 @@ class SenderProfile
         String toJsonString();
         void setSenderProfile(String fn, String add, String con_num, String em_con_per, String em_con_num);
 
+        void deleteProfile();
         void applyPreferences();
         void checkPreferences();
 };

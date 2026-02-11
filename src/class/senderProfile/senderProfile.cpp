@@ -58,6 +58,12 @@ void SenderProfile::setSenderProfile(String fn, String add, String con_num, Stri
     return;
 }
 
+void SenderProfile::deleteProfile() {
+    this->senderPref.begin("user_profile");
+    this->senderPref.clear();
+    this->senderPref.end();
+}
+
 void SenderProfile::applyPreferences(){
     senderPref.begin("user_profile");
 
