@@ -3,6 +3,9 @@
 
 #include "MyLora.h"
 
+String MyLora::receivedMessage = "";
+bool MyLora::packetReceived = false;
+
 void onReceive(int packetSize);
 
 MyLora::MyLora(int nss, int rst, int dio)
@@ -22,12 +25,15 @@ void MyLora::begin() {
         ESP.restart();
     }
 
-    LoRa.setSpreadingFactor(8);
-    LoRa.setSignalBandwidth(125E3);
-    LoRa.setCodingRate4(6);
-    LoRa.setTxPower(17);
+    LoRa.setSpreadingFactor(12);
+    LoRa.setSignalBandwidth(62.5E3);
+    LoRa.setCodingRate4(8);
+    LoRa.setTxPower(20);
     LoRa.enableCrc();
     LoRa.setSyncWord(0x1f);
+    LoRa.setPreambleLength(12);
+
+    LoRa.onReceive(onReceive);
 
     Serial.println("LoRa has started...");
 }
@@ -45,8 +51,17 @@ void MyLora::sendPacket(String message){
     return;
 }
 
+void MyLora::sendPacketStruct(GPSData &gpsData){
+    Serial.println("Sending Struct....");
+
+    LoRa.beginPacket();
+    LoRa.write((uint8_t*)&gpsData, sizeof(gpsData));
+    LoRa.endPacket();
+
+    Serial.println("Lora Send Struct");
+}
+
 void MyLora::startReceive(){
-    LoRa.onReceive(onReceive);
     LoRa.receive();
     Serial.println("LoRa is listening...");
 
@@ -60,17 +75,15 @@ void MyLora::stopReceive(){
     return;
 }
 
-
 void onReceive(int packetSize){
     if(packetSize == 0) return;
-    Serial.println("LoRa received a message...");   
+    
+    MyLora::receivedMessage = "";
 
-    String msg = "";
     while (LoRa.available()) {
-        msg += (char)LoRa.read();
+        MyLora::receivedMessage += (char)LoRa.read();
     }
 
-    Serial.println("Received: " + msg);
-
+    MyLora::packetReceived = true;
     return;
 }

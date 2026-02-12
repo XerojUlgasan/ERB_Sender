@@ -70,9 +70,9 @@ String MyGps::locationToJsonString(){
     doc["longitude"] = lon;
     doc["altitude"] = alt;
     doc["satellite"] = sat;
-    doc["is_location_valid"] = isLocValid;
-    doc["is_altitude_valid"] = isAltValid;
-    doc["is_speed_valid"] = isSpdValid;
+    // doc["is_location_valid"] = isLocValid;
+    // doc["is_altitude_valid"] = isAltValid;
+    // doc["is_speed_valid"] = isSpdValid;
 
     serializeJson(doc, jsonString);
 
@@ -88,9 +88,30 @@ JsonDocument MyGps::locationToJson() {
     doc["longitude"] = lon;
     doc["altitude"] = alt;
     doc["satellite"] = sat;
-    doc["is_location_valid"] = isLocValid;
-    doc["is_altitude_valid"] = isAltValid;
-    doc["is_speed_valid"] = isSpdValid;
+    // doc["is_location_valid"] = isLocValid;
+    // doc["is_altitude_valid"] = isAltValid;
+    // doc["is_speed_valid"] = isSpdValid;
 
     return doc;
 }
+
+GPSData MyGps::getGPSDataStuct(){
+    GPSData data;
+
+    data.lat = gps.location.lat();
+    data.lon = gps.location.lng();
+    data.alt = gps.altitude.meters();
+    data.sat = gps.satellites.value();
+    data.spd = gps.speed.kmph();
+    data.isValid = gps.location.isValid();
+
+
+    Serial.println("LAT : " + (String)data.lat);
+    Serial.println("LON : " + (String)data.lon);
+    Serial.println("ALT : " + (String)data.alt);
+    Serial.println("SAT : " + (String)data.sat);
+    Serial.println("SPD : " + (String)data.spd);
+    Serial.println("ISV : " + (String)data.isValid);
+
+    return data;
+};

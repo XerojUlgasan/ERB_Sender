@@ -2,6 +2,8 @@
 #include <TinyGPSPlus.h>
 #include <ArduinoJson.h>
 
+#include "../GPSData.h"
+
 class MyGps
 {
 private:
@@ -19,4 +21,5 @@ public:
     void getLocation();
     String locationToJsonString();
     JsonDocument locationToJson();
+    GPSData getGPSDataStuct();
 };

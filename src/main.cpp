@@ -4,6 +4,8 @@
 #include <Preferences.h>
 #include <esp_task_wdt.h>
 
+#include "./class/GPSData.h"
+
 #include "./helpers/wifiHelper.h"
 #include "webServerHandler.h"
 
@@ -42,15 +44,27 @@ void setup() {
   lora.begin();
   lora.startReceive();
 }
+int count = 0;
 
 void loop() {
-
   // if (WiFi.status() == WL_CONNECTED) {
   //   Serial.print("WiFi is connected to: ");
   //   Serial.println(WiFi.SSID());
   //   Serial.println(WiFi.localIP());
   // }
 
-  lora.sendPacket(gps.locationToJsonString());
-  delay(5000);
+  // lora.sendPacket((String)count++);
+  delay(2000);
+  // Serial.println(gps.locationToJsonString());
+  GPSData data = gps.getGPSDataStuct();
+  
+  lora.sendPacketStruct(data);
+
+  if(lora.packetReceived){
+    lora.packetReceived = false;
+
+    Serial.println("\nLoRa received a message...");
+    Serial.println("Received: " + lora.receivedMessage);
+    lora.startReceive();
+  }
 }
