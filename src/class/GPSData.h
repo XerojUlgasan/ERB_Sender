@@ -8,8 +8,10 @@ struct GPSData
     float lat;
     float alt;
     float spd;
-    int sat;
-    bool isValid;
+    String device_id;
+    int ping_count;
+    bool isClick;
+    bool isCancellation;
 };
 #pragma pack(pop)
 

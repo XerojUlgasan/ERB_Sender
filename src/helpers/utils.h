@@ -1,6 +1,17 @@
+#ifndef UTILS_H
+#define UTILS_H
+
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <vector>
+#include "initializePins.h"
+
+
+
+
+
+
+
 
 bool parseJsonToSenderProfile(String &jsonStr, String &fn, String &add, String &con_num, String &em_con_per, String &em_con_num){
   JsonDocument doc;
@@ -72,3 +83,5 @@ String vectorToJsonBoolArr(const std::vector<bool>& vec) {
 
   return result;
 }
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef MYLORA_H
+#define MYLORA_H
+
 #include <Arduino.h>
 
 #include "../GPSData.h"
@@ -20,3 +23,5 @@ public:
     void startReceive();
     void stopReceive();
 };
+
+#endif

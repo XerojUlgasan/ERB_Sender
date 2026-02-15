@@ -1,3 +1,6 @@
+#ifndef SENDERPROFILE_H
+#define SENDERPROFILE_H
+
 #include <Preferences.h>
 
 class SenderProfile
@@ -18,4 +21,6 @@ class SenderProfile
         void applyPreferences();
         void checkPreferences();
 };
+
+#endif
 

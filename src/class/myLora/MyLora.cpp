@@ -26,7 +26,7 @@ void MyLora::begin() {
     }
 
     LoRa.setSpreadingFactor(12);
-    LoRa.setSignalBandwidth(62.5E3);
+    LoRa.setSignalBandwidth(41.7E3);
     LoRa.setCodingRate4(8);
     LoRa.setTxPower(20);
     LoRa.enableCrc();

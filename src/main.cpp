@@ -3,6 +3,9 @@
 #include <WiFi.h>
 #include <Preferences.h>
 #include <esp_task_wdt.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
 
 #include "./class/GPSData.h"
 
@@ -20,16 +23,53 @@
 //TODO : Encryption key and user recording to cloud database
 
 const bool deviceIsSender = true;
+const String device_id = "ERBriwan-001";
+int ping_count = 0;
 
 Preferences pref;
 MyGps gps;
 MyLora lora(5, 14, 26);
 
+// Queue and task for asynchronous LoRa sending
+QueueHandle_t loraQueue = nullptr;
+
+void loraTask(void *pvParameters) {
+  (void)pvParameters;
+  for (;;) {
+    GPSData *dataPtr = nullptr;
+    if (xQueueReceive(loraQueue, &dataPtr, portMAX_DELAY) == pdTRUE) {
+      if (dataPtr != nullptr) {
+        lora.sendPacketStruct(*dataPtr);
+        delete dataPtr;
+        // Enforce at least 10 seconds between any two LoRa packets
+        vTaskDelay(pdMS_TO_TICKS(10000));
+      }
+    }
+
+    // Short yield in case we woke up without work (defensive)
+    vTaskDelay(1);
+  }
+}
+
+void enqueueLoraSend(GPSData *dataPtr) {
+  if (loraQueue == nullptr || dataPtr == nullptr) {
+    if (dataPtr != nullptr) {
+      delete dataPtr; // avoid leak if queue not ready
+    }
+    return;
+  }
+
+  // Non-blocking send; drop packet if queue is full
+  if (xQueueSend(loraQueue, &dataPtr, 0) != pdTRUE) {
+    delete dataPtr;
+  }
+}
+
 void setup() {
   esp_task_wdt_init(15, true);
 
   WiFi.mode(WIFI_AP);
-  WiFi.softAP("ERBriwan", "Malopit123");
+  WiFi.softAP(device_id, "Malopit123");
   Serial.begin(115200);
 
   if(initializeWebServer(deviceIsSender, pref)){
@@ -43,28 +83,22 @@ void setup() {
   gps.begin();
   lora.begin();
   lora.startReceive();
-}
-int count = 0;
 
-void loop() {
-  // if (WiFi.status() == WL_CONNECTED) {
-  //   Serial.print("WiFi is connected to: ");
-  //   Serial.println(WiFi.SSID());
-  //   Serial.println(WiFi.localIP());
-  // }
-
-  // lora.sendPacket((String)count++);
-  delay(2000);
-  // Serial.println(gps.locationToJsonString());
-  GPSData data = gps.getGPSDataStuct();
-  
-  lora.sendPacketStruct(data);
-
-  if(lora.packetReceived){
-    lora.packetReceived = false;
-
-    Serial.println("\nLoRa received a message...");
-    Serial.println("Received: " + lora.receivedMessage);
-    lora.startReceive();
+  // Create queue and LoRa sender task
+  loraQueue = xQueueCreate(10, sizeof(GPSData *));
+  if (loraQueue != nullptr) {
+    xTaskCreatePinnedToCore(
+      loraTask,
+      "LoRaTask",
+      4096,
+      nullptr,
+      1,
+      nullptr,
+      1  // run on core 1 to keep core 0 freer
+    );
   }
+}
+#include "./helpers/clickHandler.h"
+void loop() {
+  clickHandler();
 }

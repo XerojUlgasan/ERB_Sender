@@ -1,3 +1,6 @@
+#ifndef MYGPS_H
+#define MYGPS_H
+
 #include <Arduino.h>
 #include <TinyGPSPlus.h>
 #include <ArduinoJson.h>
@@ -21,5 +24,7 @@ public:
     void getLocation();
     String locationToJsonString();
     JsonDocument locationToJson();
-    GPSData getGPSDataStuct();
+    GPSData getGPSDataStuct(String device_id, int& ping_count, bool isClick, bool isCancellation);
 };
+
+#endif

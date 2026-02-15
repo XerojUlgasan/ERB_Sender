@@ -95,23 +95,28 @@ JsonDocument MyGps::locationToJson() {
     return doc;
 }
 
-GPSData MyGps::getGPSDataStuct(){
+GPSData MyGps::getGPSDataStuct(String device_id, int& ping_count, bool isClick, bool isCancellation){
+    ping_count++;
+
     GPSData data;
 
     data.lat = gps.location.lat();
     data.lon = gps.location.lng();
     data.alt = gps.altitude.meters();
-    data.sat = gps.satellites.value();
     data.spd = gps.speed.kmph();
-    data.isValid = gps.location.isValid();
-
+    data.device_id = device_id;
+    data.ping_count = ping_count;
+    data.isClick = isClick;
+    data.isCancellation = isCancellation;
 
     Serial.println("LAT : " + (String)data.lat);
     Serial.println("LON : " + (String)data.lon);
     Serial.println("ALT : " + (String)data.alt);
-    Serial.println("SAT : " + (String)data.sat);
     Serial.println("SPD : " + (String)data.spd);
-    Serial.println("ISV : " + (String)data.isValid);
+    Serial.println("DID : " + (String)data.device_id);
+    Serial.println("PNC : " + (String)data.ping_count);
+    Serial.println("CLICK : " + (String)data.isClick);
+    Serial.println("CANCEL : " + (String)data.isCancellation);
 
     return data;
 };

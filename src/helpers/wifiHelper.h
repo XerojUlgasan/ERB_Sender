@@ -1,3 +1,6 @@
+#ifndef WIFIHELPER_H
+#define WIFIHELPER_H
+
 #include <Arduino.h>
 #include <WiFi.h>
 #include <vector>
@@ -26,3 +29,5 @@ void detectNetworks(std::vector<String> &ssid, std::vector<bool> &isSecure) {
 
     return;
 }
+
+#endif

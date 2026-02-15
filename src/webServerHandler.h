@@ -1,3 +1,6 @@
+#ifndef WEBSERVERHANDLER_H
+#define WEBSERVERHANDLER_H
+
 #include <ESPAsyncWebServer.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
@@ -163,3 +166,5 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
 
   return true;
 }
+
+#endif
