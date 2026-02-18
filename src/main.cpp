@@ -24,6 +24,7 @@
 
 const bool deviceIsSender = true;
 const String device_id = "ERBriwan-001";
+bool isRegistered= false;
 int ping_count = 0;
 
 Preferences pref;
@@ -98,7 +99,9 @@ void setup() {
     );
   }
 }
+
 #include "./helpers/clickHandler.h"
+
 void loop() {
-  clickHandler();
+  if(isRegistered) clickHandler(); // ONLY ALLOW IF A USER IS REGISTERED TO THIS DEVICE
 }

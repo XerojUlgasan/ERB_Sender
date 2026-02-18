@@ -8,6 +8,8 @@
 #include "./class/senderProfile/senderProfile.h"
 #include "./helpers/utils.h"
 
+extern const String device_id;
+
 AsyncWebServer server(80);
 SenderProfile sender; // Global sender object
 
@@ -54,21 +56,35 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
     HTTP_POST,
     [&pref](AsyncWebServerRequest *request, JsonVariant &json){
 
-        String fn, add, con_num, em_con_per, em_con_num;
+        String firstname = json["firstname"].as<String>();
+        String lastname = json["lastname"].as<String>();
+        String middlename = json["middlename"].as<String>(); // Optional - can be null
+        String birthdate = json["birthdate"].as<String>();
+        String emergency_contact = json["emergency_contact"].as<String>();
+        String emergency_person = json["emergency_person"].as<String>();
+        String region = json["region"].as<String>();
+        String city_municipality = json["city_municipality"].as<String>();
+        String barangay = json["barangay"].as<String>();
+        String contact = json["contact"].as<String>();
 
-        fn = json["fullname"].as<String>();
-        add = json["address"].as<String>();
-        con_num = json["contact_number"].as<String>();
-        em_con_per = json["emergency_contact_person"].as<String>();
-        em_con_num = json["emergency_contact_number"].as<String>();
+        // Validate required fields (middlename is optional)
+        if(firstname.isEmpty() || lastname.isEmpty() || birthdate.isEmpty() || 
+           emergency_contact.isEmpty() || emergency_person.isEmpty() || 
+           region.isEmpty() || city_municipality.isEmpty() || 
+           barangay.isEmpty() || contact.isEmpty()) {
+            
+            String errorJson = "{\"error\": \"Missing required fields. All fields are required except middlename.\"}";
+            request->send(400, "application/json", errorJson);
+            return;
+        }
 
-        Serial.println(em_con_per);
-        Serial.println(em_con_num);
+        sender.setSenderProfile(firstname, lastname, middlename, birthdate,
+                               emergency_contact, emergency_person, region,
+                               city_municipality, barangay, contact);
 
-        sender.setSenderProfile(fn, add, con_num, em_con_per, em_con_num);
         request->send(200);
 
-          Serial.println(sender.toJsonString());
+        Serial.println(sender.toJsonString());
     }
   );
 
@@ -159,6 +175,18 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
           "application/json",
           jsonString
         );
+      }
+    );
+
+    server.on(
+      "/confirmRegistration",
+      HTTP_GET,
+      [](AsyncWebServerRequest *request) {
+        if(sender.uploadToAPI(device_id)){
+          request->send(200);
+        }else{
+          request->send(400);
+        }
       }
     );
 
