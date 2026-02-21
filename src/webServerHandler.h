@@ -4,11 +4,14 @@
 #include <ESPAsyncWebServer.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "./class/senderProfile/senderProfile.h"
 #include "./helpers/utils.h"
 
 extern const String device_id;
+extern void syncSystemTime();  // Forward declaration
 
 AsyncWebServer server(80);
 SenderProfile sender; // Global sender object
@@ -167,6 +170,12 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
           elapsed += 100;
           Serial.print(".");
         }
+        
+        // Sync NTP time after WiFi connects (critical for SSL/TLS)
+        if(WiFi.status() == WL_CONNECTED) {
+          Serial.println("\nWiFi connected! Syncing system time...");
+          syncSystemTime();
+        }
 
         String jsonString;
         JsonDocument doc;
@@ -209,6 +218,17 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
       "/confirmRegistration",
       HTTP_POST,
       [](AsyncWebServerRequest *request) {
+        Serial.printf("Free heap before HTTPS: %d bytes\n", ESP.getFreeHeap());
+        
+        // Give WiFi connection time to stabilize
+        delay(500);
+        
+        if(WiFi.status() != WL_CONNECTED){
+          Serial.println("WiFi not connected during confirmRegistration!");
+          request->send(503);  // Service Unavailable
+          return;
+        }
+        
         if(sender.uploadToAPI(device_id)){
           request->send(200);
         }else{

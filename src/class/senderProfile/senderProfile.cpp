@@ -1,6 +1,7 @@
 #include "senderProfile.h"
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <esp_task_wdt.h>
 
 SenderProfile::SenderProfile()
 {
@@ -128,6 +129,7 @@ void SenderProfile::checkPreferences(){
 }
 
 bool SenderProfile::uploadToAPI(String deviceId) {
+    Serial.printf("Free heap before HTTPS: %d bytes\n", ESP.getFreeHeap());
     if(WiFi.status() != WL_CONNECTED){
         Serial.println("WiFi not connected!");
         return false;
@@ -137,20 +139,32 @@ bool SenderProfile::uploadToAPI(String deviceId) {
         return false;
     }
 
-    WiFiClientSecure client;
-    client.setInsecure();
-    client.setTimeout(15);  // 15 second timeout
-    client.setHandshakeTimeout(15);  // SSL handshake timeout
-
-    HTTPClient http;
-    http.setTimeout(20000);
-
-    if(!http.begin(client, api_url)){
-        Serial.println("HTTP begin failed!");
+    // Verify system time is synchronized for SSL
+    time_t now = time(nullptr);
+    struct tm timeinfo = *localtime(&now);
+    Serial.print("Current system time: ");
+    Serial.println(asctime(&timeinfo));
+    
+    if(now < 24 * 3600) {
+        Serial.println("WARNING: System time not synchronized! SSL will fail.");
         return false;
     }
 
-    http.addHeader("Content-Type", "application/json");
+    // Check for enough heap before attempting SSL handshake
+    if(ESP.getFreeHeap() < 60000) {
+        Serial.printf("Insufficient heap for SSL handshake! Free: %d bytes\n", ESP.getFreeHeap());
+        return false;
+    }
+
+    // Test DNS resolution first
+    Serial.println("\n=== DNS Resolution ===");
+    IPAddress resolved;
+    int dns_status = WiFi.hostByName("erbriwan-api.onrender.com", resolved);
+    if(dns_status != 1) {
+        Serial.println("ERROR: DNS resolution failed for erbriwan-api.onrender.com");
+        return false;
+    }
+    Serial.printf("DNS resolved to: %s\n", resolved.toString().c_str());
 
     JsonDocument doc;
     doc["user_fn"] = myProfile.firstname;
@@ -172,36 +186,92 @@ bool SenderProfile::uploadToAPI(String deviceId) {
 
     String payload;
     serializeJson(doc, payload);
+    Serial.printf("Payload size: %d bytes\n", payload.length());
 
-    int statusCode = http.POST(payload);
-    if(statusCode <= 0){
-        Serial.println("HTTP POST failed: " + String(statusCode));
+    // Retry logic for intermittent connection failures
+    int maxRetries = 3;
+    int statusCode = -1;
+    
+    for(int retry = 0; retry < maxRetries; retry++) {
+        if(WiFi.status() != WL_CONNECTED) {
+            Serial.println("WiFi disconnected before POST attempt!");
+            return false;
+        }
+        
+        // Force garbage collection before SSL attempt
+        esp_task_wdt_reset();
+        delay(200);
+        
+        // Create fresh client for each attempt
+        WiFiClientSecure client;
+        client.setInsecure();
+        client.setTimeout(30);
+        
+        HTTPClient http;
+        http.setTimeout(40000);
+        
+        Serial.printf("\n=== HTTPS attempt %d/%d ===\n", retry + 1, maxRetries);
+        Serial.printf("URL: %s\n", api_url.c_str());
+        Serial.printf("Free heap: %d bytes\n", ESP.getFreeHeap());
+        Serial.printf("WiFi IP: %s\n", WiFi.localIP().toString().c_str());
+        
+        // Try to begin connection with hostname (avoids SNI mismatch)
+        bool begin_success = http.begin(client, api_url);
+        if(!begin_success){
+            Serial.println("ERROR: http.begin() failed - cannot start connection");
+            http.end();
+            if(retry < maxRetries - 1) {
+                delay(1000 * (retry + 1));
+            }
+            continue;
+        }
+        
+        http.addHeader("Content-Type", "application/json");
+        Serial.println("Starting POST request...");
+        
+        statusCode = http.POST(payload);
+        
+        if(statusCode > 0) {
+            Serial.printf("✅ HTTP POST succeeded on attempt %d with status: %d\n", retry + 1, statusCode);
+            
+            String response = http.getString();
+            http.end();
+            
+            JsonDocument respDoc;
+            DeserializationError error = deserializeJson(respDoc, response);
+            
+            if(error) {
+                Serial.println("JSON parsing error in response");
+                return false;
+            }
+            
+            String user_id = respDoc["user_id"].as<String>();
+            String access_key = respDoc["access_key"].as<String>();
+            
+            Serial.println("USER ID    : " + user_id);
+            Serial.println("Access Key : " + access_key);
+            
+            senderPref.begin("secret");
+            senderPref.putString("user_id", user_id);
+            senderPref.putString("access_key", access_key);
+            senderPref.putBool("hasUser", true);
+            senderPref.end();
+            
+            Serial.println("API Response (" + String(statusCode) + "): " + response);
+            return statusCode >= 200 && statusCode < 300;
+        }
+        
+        Serial.printf("❌ HTTP POST failed (attempt %d): error %d\n", retry + 1, statusCode);
         http.end();
-        return false;
+        
+        if(retry < maxRetries - 1) {
+            int backoff = 2000 * (retry + 1);  
+            Serial.printf("Retrying in %d ms...\n", backoff);
+            delay(backoff);
+        }
     }
 
-    String response = http.getString();
-    http.end();
-
-    JsonDocument respDoc;
-    DeserializationError error =  deserializeJson(respDoc, response);
-
-    if(error) return false;
-    else {
-        String user_id = respDoc["user_id"].as<String>();
-        String access_key = respDoc["access_key"].as<String>();
-
-        Serial.println("USER ID    : " + user_id);
-        Serial.println("Access Key : " + access_key);
-
-        senderPref.begin("secret");
-        senderPref.putString("user_id", user_id);
-        senderPref.putString("access_key", access_key);
-        senderPref.putBool("hasUser", true);
-        senderPref.end();
-    }
-
-    Serial.println("API Response (" + String(statusCode) + "): " + response);
-
-    return statusCode >= 200 && statusCode < 300;
+    Serial.printf("\n❌ HTTP POST FAILED after %d attempts\n", maxRetries);
+    Serial.println("IP 216.24.57.7 might be down or unreachable");
+    return false;
 }

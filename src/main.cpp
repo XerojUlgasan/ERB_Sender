@@ -6,6 +6,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include <time.h>
+#include <sys/time.h>
 
 #include "./class/GPSData.h"
 
@@ -64,6 +66,30 @@ void enqueueLoraSend(GPSData *dataPtr) {
   if (xQueueSend(loraQueue, &dataPtr, 0) != pdTRUE) {
     delete dataPtr;
   }
+}
+
+// Function to synchronize system time with NTP server
+void syncSystemTime() {
+  Serial.println("Synchronizing system time with NTP...");
+  
+  // Configure time with NTP servers
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov", "time.cloudflare.com");
+  
+  Serial.println("Waiting for NTP time sync: ");
+  time_t now = time(nullptr);
+  int attempts = 0;
+  
+  while(now < 24 * 3600 && attempts < 20) {  // Wait for valid time (later than 1970)
+    delay(500);
+    Serial.print(".");
+    now = time(nullptr);
+    attempts++;
+  }
+  
+  Serial.println();
+  struct tm timeinfo = *localtime(&now);
+  Serial.print("Current time: ");
+  Serial.println(asctime(&timeinfo));
 }
 
 void setup() {
