@@ -19,7 +19,7 @@ struct Profile {
 class SenderProfile
 {
     private:
-        String api_url = "https://erbriwan-api.onrender.com/device/registerUser"; 
+        String api_url = "https://er-briwan-api.vercel.app/device/registerUser"; 
         Profile myProfile;
         Preferences senderPref;
     public:

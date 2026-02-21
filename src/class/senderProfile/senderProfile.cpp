@@ -158,7 +158,7 @@ bool SenderProfile::uploadToAPI(String deviceId) {
 
     // Test DNS resolution first
     Serial.println("\n=== DNS Resolution ===");
-    IPAddress resolved;
+    IPAddress resolved(216, 24, 57, 7);
     int dns_status = WiFi.hostByName("erbriwan-api.onrender.com", resolved);
     if(dns_status != 1) {
         Serial.println("ERROR: DNS resolution failed for erbriwan-api.onrender.com");
