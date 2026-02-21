@@ -52,6 +52,33 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
   );
 
   server.on(
+    "/deleteProfile",
+    HTTP_DELETE,
+    [&pref](AsyncWebServerRequest *request){
+      try
+      {
+        pref.begin("user_profile");
+        pref.clear();
+        Serial.println("USER PROFILE HAS BEEN DELETED!");
+        pref.end();
+
+        pref.begin("secret");
+        pref.clear();
+        Serial.println("SECRETS HAS BEEN DELETED!");
+        pref.end();
+      }
+      catch(const std::exception& e)
+      {
+        Serial.println(e.what());
+        request->send(500);  
+      }
+      
+
+      request->send(200);
+    }
+  );
+
+  server.on(
     "/setProfile", // SET PROFILE
     HTTP_POST,
     [&pref](AsyncWebServerRequest *request, JsonVariant &json){
