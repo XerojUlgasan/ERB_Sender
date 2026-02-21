@@ -272,6 +272,6 @@ bool SenderProfile::uploadToAPI(String deviceId) {
     }
 
     Serial.printf("\n❌ HTTP POST FAILED after %d attempts\n", maxRetries);
-    Serial.println("IP 216.24.57.7 might be down or unreachable");
+    Serial.println("Check if erbriwan-api.onrender.com is accessible");
     return false;
 }
