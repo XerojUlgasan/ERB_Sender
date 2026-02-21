@@ -103,5 +103,11 @@ void setup() {
 #include "./helpers/clickHandler.h"
 
 void loop() {
+  pref.begin("secret");
+  isRegistered = pref.getBool("hasUser");
+
   if(isRegistered) clickHandler(); // ONLY ALLOW IF A USER IS REGISTERED TO THIS DEVICE
+
+  pref.end();
+  // clickHandler();
 }

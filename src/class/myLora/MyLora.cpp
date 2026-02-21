@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <LoRa.h>
+#include <Preferences.h>
 
 #include "MyLora.h"
 
@@ -53,6 +54,8 @@ void MyLora::sendPacket(String message){
 
 void MyLora::sendPacketStruct(GPSData &gpsData){
     Serial.println("Sending Struct....");
+
+    Preferences pref;
 
     LoRa.beginPacket();
     LoRa.write((uint8_t*)&gpsData, sizeof(gpsData));

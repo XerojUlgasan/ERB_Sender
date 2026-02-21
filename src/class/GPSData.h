@@ -12,6 +12,7 @@ struct GPSData
     int ping_count;
     bool isClick;
     bool isCancellation;
+    String access_key;
 };
 #pragma pack(pop)
 

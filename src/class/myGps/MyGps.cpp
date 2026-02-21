@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <Preferences.h>
 
 #include "./MyGps.h"
 
@@ -99,6 +100,8 @@ GPSData MyGps::getGPSDataStuct(String device_id, int& ping_count, bool isClick, 
     ping_count++;
 
     GPSData data;
+    Preferences pref;
+    pref.begin("secret");
 
     data.lat = gps.location.lat();
     data.lon = gps.location.lng();
@@ -108,6 +111,9 @@ GPSData MyGps::getGPSDataStuct(String device_id, int& ping_count, bool isClick, 
     data.ping_count = ping_count;
     data.isClick = isClick;
     data.isCancellation = isCancellation;
+    data.access_key = pref.getString("access_key", "");
+
+    pref.end();
 
     Serial.println("LAT : " + (String)data.lat);
     Serial.println("LON : " + (String)data.lon);
@@ -117,6 +123,7 @@ GPSData MyGps::getGPSDataStuct(String device_id, int& ping_count, bool isClick, 
     Serial.println("PNC : " + (String)data.ping_count);
     Serial.println("CLICK : " + (String)data.isClick);
     Serial.println("CANCEL : " + (String)data.isCancellation);
-
+    Serial.println("ACCESS : " + (String)data.access_key);
+    
     return data;
 };

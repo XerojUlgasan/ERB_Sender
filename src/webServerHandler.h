@@ -180,7 +180,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
 
     server.on(
       "/confirmRegistration",
-      HTTP_GET,
+      HTTP_POST,
       [](AsyncWebServerRequest *request) {
         if(sender.uploadToAPI(device_id)){
           request->send(200);

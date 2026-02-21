@@ -183,7 +183,7 @@ bool SenderProfile::uploadToAPI(String deviceId) {
     if(error) return false;
     else {
         String user_id = respDoc["user_id"].as<String>();
-        String access_key = respDoc["user_id"].as<String>();
+        String access_key = respDoc["access_key"].as<String>();
 
         Serial.println("USER ID    : " + user_id);
         Serial.println("Access Key : " + access_key);
@@ -191,6 +191,7 @@ bool SenderProfile::uploadToAPI(String deviceId) {
         senderPref.begin("secret");
         senderPref.putString("user_id", user_id);
         senderPref.putString("access_key", access_key);
+        senderPref.putBool("hasUser", true);
         senderPref.end();
     }
 
