@@ -28,19 +28,25 @@ bool SenderProfile::checkExist() {
 }
 
 String SenderProfile::toJsonString() {
-    String json = "{";
-        json += "\"firstname\": \"" + myProfile.firstname + "\",";
-        json += "\"lastname\": \"" + myProfile.lastname + "\",";
-        json += "\"middlename\": \"" + myProfile.middlename + "\",";
-        json += "\"birthdate\": \"" + myProfile.birthdate + "\",";
-        json += "\"emergency_contact\": \"" + myProfile.emergency_contact + "\",";
-        json += "\"emergency_person\": \"" + myProfile.emergency_person + "\",";
-        json += "\"region\": \"" + myProfile.region + "\",";
-        json += "\"city_municipality\": \"" + myProfile.city_municipality + "\",";
-        json += "\"barangay\": \"" + myProfile.barangay + "\",";
-        json += "\"contact\": \"" + myProfile.contact + "\"";
-        json += "}";
+    this->senderPref.begin("secrets");
+    bool isUserRegistered = senderPref.getBool("hasUser");
 
+    String json = "{";
+    json += "\"firstname\":\"" + myProfile.firstname + "\",";
+    json += "\"lastname\":\"" + myProfile.lastname + "\",";
+    json += "\"middlename\":\"" + myProfile.middlename + "\",";
+    json += "\"birthdate\":\"" + myProfile.birthdate + "\",";
+    json += "\"emergency_contact\":\"" + myProfile.emergency_contact + "\",";
+    json += "\"emergency_person\":\"" + myProfile.emergency_person + "\",";
+    json += "\"region\":\"" + myProfile.region + "\",";
+    json += "\"city_municipality\":\"" + myProfile.city_municipality + "\",";
+    json += "\"barangay\":\"" + myProfile.barangay + "\",";
+    json += "\"contact\":\"" + myProfile.contact + "\",";
+    json += "\"isUserRegistered\":" + String(isUserRegistered ? "true" : "false");
+    json += "}";
+
+    this->senderPref.end();
+    
     return json;
 }
 
