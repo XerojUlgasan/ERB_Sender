@@ -11,7 +11,6 @@
 #include "./helpers/utils.h"
 
 extern const String device_id;
-extern void syncSystemTime();  // Forward declaration
 
 AsyncWebServer server(80);
 SenderProfile sender; // Global sender object
@@ -51,33 +50,6 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
                 sender.toJsonString()
             );
         }
-    }
-  );
-
-  server.on(
-    "/deleteProfile",
-    HTTP_DELETE,
-    [&pref](AsyncWebServerRequest *request){
-      try
-      {
-        pref.begin("user_profile");
-        pref.clear();
-        Serial.println("USER PROFILE HAS BEEN DELETED!");
-        pref.end();
-
-        pref.begin("secret");
-        pref.clear();
-        Serial.println("SECRETS HAS BEEN DELETED!");
-        pref.end();
-      }
-      catch(const std::exception& e)
-      {
-        Serial.println(e.what());
-        request->send(500);  
-      }
-      
-
-      request->send(200);
     }
   );
 
@@ -169,12 +141,6 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
           delay(100);
           elapsed += 100;
           Serial.print(".");
-        }
-        
-        // Sync NTP time after WiFi connects (critical for SSL/TLS)
-        if(WiFi.status() == WL_CONNECTED) {
-          Serial.println("\nWiFi connected! Syncing system time...");
-          syncSystemTime();
         }
 
         String jsonString;
