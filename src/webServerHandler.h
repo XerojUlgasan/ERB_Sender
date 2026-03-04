@@ -8,6 +8,7 @@
 #include <sys/time.h>
 
 #include "./class/senderProfile/senderProfile.h"
+#include "./class/EmergencyHistory.h"
 #include "./helpers/utils.h"
 
 extern const String device_id;
@@ -200,6 +201,39 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
         }else{
           request->send(400);
         }
+      }
+    );
+
+    server.on(
+      "/getHistory",
+      HTTP_GET,
+      [&pref](AsyncWebServerRequest *request) {
+        pref.begin("secret");
+        
+        // Get all emergency history records
+        EmergencyRecord records[MAX_EMERGENCY_RECORDS];
+        int count = getAllEmergencyHistory(pref, records, MAX_EMERGENCY_RECORDS);
+        
+        pref.end();
+        
+        // Build JSON response
+        JsonDocument doc;
+        JsonArray historyArray = doc.createNestedArray("history");
+        
+        for (int i = 0; i < count; i++) {
+          JsonObject record = historyArray.createNestedObject();
+          record["emergency_id"] = String(records[i].emergency_id);
+          record["lon"] = records[i].lon;
+          record["lat"] = records[i].lat;
+          record["isStart"] = records[i].isStart;
+        }
+        
+        doc["total"] = count;
+        
+        String jsonString;
+        serializeJson(doc, jsonString);
+        
+        request->send(200, "application/json", jsonString);
       }
     );
 

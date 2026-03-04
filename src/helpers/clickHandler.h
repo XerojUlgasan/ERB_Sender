@@ -5,16 +5,21 @@
 #include "../class/myGps/MyGps.h"
 #include "../class/myLora/MyLora.h"
 #include "../class/GPSData.h"
+#include "../class/EmergencyHistory.h"
 #include "../initializePins.h"
 
 extern MyGps gps;
 extern MyLora lora;
 extern const String device_id;
 extern int ping_count;
+extern Preferences pref;
 
 // Asynchronous LoRa sending is handled by a dedicated task in main.cpp.
 // This function enqueues a GPSData pointer for that task to send.
 void enqueueLoraSend(GPSData *dataPtr);
+
+// Current active emergency ID for tracking start/end pairs
+String currentEmergencyId = "";
 
 // Button / click detection state (3 clicks within 5s)
 bool lastBtnState = LOW;
@@ -33,6 +38,7 @@ unsigned long lastFollowPingTime = 0;   // for periodic follow-up pings
 bool cancellationActive = false;
 unsigned long lastCancellationTime = 0;
 int cancellationPacketsSent = 0;
+bool cancellationRecorded = false;  // Track if we've recorded the cancellation event
 
 // Adjust these two thresholds if your wiring/noise requires it (0..4095 ADC)
 const int BUTTON_PRESS_THRESHOLD  = 3000; // >= 3000 ≈ HIGH (close to 4095)
@@ -47,7 +53,7 @@ const int CANCELLATION_REPEAT_COUNT       = 15;       // send cancellation 15 ti
 
 // Helper to build GPSData and enqueue it for async LoRa sending
 void enqueueGpsPacket(bool isClick, bool isCancellation) {
-    GPSData temp = gps.getGPSDataStuct(device_id, ping_count, isClick, isCancellation);
+    GPSData temp = gps.getGPSDataStuct(device_id, ping_count, isClick, isCancellation, currentEmergencyId);
     GPSData *ptr = new GPSData;
     *ptr = temp;
     enqueueLoraSend(ptr);
@@ -69,6 +75,15 @@ void clickHandler() {
         if (cancellationPacketsSent < CANCELLATION_REPEAT_COUNT) {
             if (lastCancellationTime == 0 || (now - lastCancellationTime) >= CANCELLATION_INTERVAL) {
                 enqueueGpsPacket(false, true); // cancellation ping
+                
+                // Record cancellation (END) event on FIRST cancellation packet
+                if (!cancellationRecorded) {
+                    GPSData gpsData = gps.getGPSDataStuct(device_id, ping_count, true, false, currentEmergencyId);
+                    pref.begin("secret");
+                    recordEmergency(pref, gpsData.lon, gpsData.lat, currentEmergencyId, false);  // Record END (isStart=false)
+                    pref.end();
+                    cancellationRecorded = true;
+                }
 
                 cancellationPacketsSent++;
                 lastCancellationTime = now;
@@ -77,10 +92,12 @@ void clickHandler() {
             // Finished all cancellation packets; reset state so new SOS can be started
             cancellationActive = false;
             cancellationPacketsSent = 0;
+            cancellationRecorded = false;
             lastCancellationTime = 0;
             clickCount = 0;
             firstClickTime = 0;
             ping_count = 0; // reset ping counter after final cancellation ping
+            currentEmergencyId = "";  // Clear emergency ID
         }
     }
 
@@ -110,6 +127,7 @@ void clickHandler() {
                 sosActive = false;              // stop follow pings
                 cancellationActive = true;
                 cancellationPacketsSent = 0;
+                cancellationRecorded = false;   // Reset flag for new cancellation
                 lastCancellationTime = 0;      // send first cancellation on next loop
                 longPressHandled = true;
             }
@@ -138,8 +156,19 @@ void clickHandler() {
 
             if (clickCount >= 3 && (now - firstClickTime) <= TRIPLE_CLICK_WINDOW) {
                 Serial.println("3 clicks detected! Starting SOS pings...");
+                
+                // Generate new emergency ID for this SOS session
+                currentEmergencyId = generateEmergencyId();
+                Serial.printf("Generated Emergency ID: %s\n", currentEmergencyId.c_str());
+                
                 // Initial SOS packet (user-triggered)
                 enqueueGpsPacket(true, false);
+                
+                // Record START event in emergency history
+                GPSData gpsData = gps.getGPSDataStuct(device_id, ping_count, true, false, currentEmergencyId);
+                pref.begin("secret");
+                recordEmergency(pref, gpsData.lon, gpsData.lat, currentEmergencyId, true);  // Record START (isStart=true)
+                pref.end();
 
                 // Enter SOS active state; follow-up pings will be sent periodically
                 sosActive = true;

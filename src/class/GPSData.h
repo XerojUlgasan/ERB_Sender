@@ -9,10 +9,13 @@ struct GPSData
     float alt;
     float spd;
     String device_id;
+    String emergency_id;  // 5-char alphanumeric ID for emergency tracking
     int ping_count;
     bool isClick;
     bool isCancellation;
-    String access_key;
+    bool isLocValid;
+    bool isAltValid;
+    bool isSpdValid;
 };
 #pragma pack(pop)
 

@@ -15,15 +15,32 @@ MyGps::~MyGps()
 }
 
 void MyGps::begin() {
-    GPS.begin(9600, SERIAL_8N1, RX2, TX2);
+    Serial.println("Initializing GPS...");
+    GPS.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+    Serial.print("GPS Serial started on RX:");
+    Serial.print(GPS_RX_PIN);
+    Serial.print(" TX:");
+    Serial.println(GPS_TX_PIN);
+    loadLocationFromPreferences();
 }
 
 void MyGps::getLocation() {
     Serial.println("Getting Location...");
     
+    int bytesAvailable = 0;
     while (GPS.available()) {
         char c = GPS.read();
+        // Serial.print(c);  // Debug: Print raw NMEA sentences (GPGGA, GPRMC, etc.)
         gps.encode(c);
+        bytesAvailable++;
+    }
+    
+    if (bytesAvailable == 0) {
+        Serial.println("No GPS data available!");
+    } else {
+        Serial.print("\nRead ");
+        Serial.print(bytesAvailable);
+        Serial.println(" bytes from GPS");
     }
 
     if(gps.location.isUpdated()){
@@ -56,6 +73,11 @@ void MyGps::getLocation() {
         isLocValid = gps.location.isValid();
         isAltValid = gps.altitude.isValid();
         isSpdValid = gps.speed.isValid();
+        
+        // Save valid location to Preferences for recovery after power loss
+        if (isLocValid) {
+            saveLocationToPreferences();
+        }
     }
 
     return;
@@ -96,25 +118,48 @@ JsonDocument MyGps::locationToJson() {
     return doc;
 }
 
-GPSData MyGps::getGPSDataStuct(String device_id, int& ping_count, bool isClick, bool isCancellation){
+GPSData MyGps::getGPSDataStuct(String device_id, int& ping_count, bool isClick, bool isCancellation, String emergency_id){
     ping_count++;
+    
+    // Ensure we have the latest GPS data before creating packet
+    getLocation();
 
     GPSData data;
     Preferences pref;
     pref.begin("secret");
 
-    data.lat = gps.location.lat();
-    data.lon = gps.location.lng();
-    data.alt = gps.altitude.meters();
-    data.spd = gps.speed.kmph();
+    // Get current GPS values
+    double current_lat = gps.location.lat();
+    double current_lon = gps.location.lng();
+    double current_alt = gps.altitude.meters();
+    double current_spd = gps.speed.kmph();
+    
+    // Check if GPS data is not available or invalid (0 or no fix)
+    if (!gps.location.isValid() || current_lat == 0 || current_lon == 0) {
+        Serial.println("GPS data unavailable, loading from Preferences...");
+        loadLocationFromPreferences();
+        data.lat = lat;
+        data.lon = lon;
+        data.alt = alt;
+        data.spd = spd;
+    } else {
+        // Use current valid GPS data
+        data.lat = current_lat;
+        data.lon = current_lon;
+        data.alt = current_alt;
+        data.spd = current_spd;
+    }
+    
     data.device_id = device_id;
+    data.emergency_id = emergency_id;
     data.ping_count = ping_count;
     data.isClick = isClick;
     data.isCancellation = isCancellation;
-    data.access_key = pref.getString("access_key", "");
+    data.isLocValid = gps.location.isValid();
+    data.isAltValid = gps.altitude.isValid();
+    data.isSpdValid = gps.speed.isValid();
 
     pref.end();
-
     Serial.println("LAT : " + (String)data.lat);
     Serial.println("LON : " + (String)data.lon);
     Serial.println("ALT : " + (String)data.alt);
@@ -123,7 +168,40 @@ GPSData MyGps::getGPSDataStuct(String device_id, int& ping_count, bool isClick, 
     Serial.println("PNC : " + (String)data.ping_count);
     Serial.println("CLICK : " + (String)data.isClick);
     Serial.println("CANCEL : " + (String)data.isCancellation);
-    Serial.println("ACCESS : " + (String)data.access_key);
-    
+    Serial.println("EMERGENCY ID : " + (String)data.emergency_id);
+    Serial.println("LOC_VALID : " + (String)data.isLocValid);
+    Serial.println("ALT_VALID : " + (String)data.isAltValid);
+    Serial.println("SPD_VALID : " + (String)data.isSpdValid);
+    Serial.println("SATELLITES : " + (String)gps.satellites.value());
     return data;
-};
+}
+
+void MyGps::saveLocationToPreferences() {
+    Preferences pref;
+    pref.begin("gps", false);
+    
+    pref.putDouble("last_lat", lat);
+    pref.putDouble("last_lon", lon);
+    pref.putDouble("last_alt", alt);
+    pref.putDouble("last_spd", spd);
+    
+    pref.end();
+    
+    Serial.println("Location saved to Preferences");
+}
+
+void MyGps::loadLocationFromPreferences() {
+    Preferences pref;
+    pref.begin("gps", true);  // read-only mode
+    
+    lat = pref.getDouble("last_lat", 0.0);
+    lon = pref.getDouble("last_lon", 0.0);
+    alt = pref.getDouble("last_alt", 0.0);
+    spd = pref.getDouble("last_spd", 0.0);
+    
+    pref.end();
+    
+    Serial.println("Location loaded from Preferences");
+    Serial.println("Previous LAT: " + (String)lat);
+    Serial.println("Previous LON: " + (String)lon);
+}

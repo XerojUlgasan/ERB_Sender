@@ -111,5 +111,10 @@ void loop() {
   if(isRegistered) clickHandler(); // ONLY ALLOW IF A USER IS REGISTERED TO THIS DEVICE
 
   pref.end();
+  
+  // Continuously read GPS data to keep TinyGPS++ buffer updated
+  // gps.getLocation();
+  
+  delay(100);  // Small delay to prevent tight loop
   // clickHandler();
 }
