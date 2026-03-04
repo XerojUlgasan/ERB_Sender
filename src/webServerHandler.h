@@ -178,6 +178,11 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
           "application/json",
           jsonString
         );
+
+        if(WiFi.status() == WL_CONNECTED) {
+          delay(1000);
+          WiFi.mode(WIFI_STA);
+        }
       }
     );
 
