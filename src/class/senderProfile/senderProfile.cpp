@@ -28,9 +28,10 @@ bool SenderProfile::checkExist() {
     }
 }
 
-String SenderProfile::toJsonString() {
+String SenderProfile::toJsonString(const String &deviceId) {
     this->senderPref.begin("secret");
     bool isUserRegistered = senderPref.getBool("hasUser");
+    String user_id = senderPref.getString("user_id");
 
     String json = "{";
     json += "\"firstname\":\"" + myProfile.firstname + "\",";
@@ -43,6 +44,8 @@ String SenderProfile::toJsonString() {
     json += "\"city_municipality\":\"" + myProfile.city_municipality + "\",";
     json += "\"barangay\":\"" + myProfile.barangay + "\",";
     json += "\"contact\":\"" + myProfile.contact + "\",";
+    json += "\"user_id\":\"" + user_id + "\",";
+    json += "\"device_id\":\"" + deviceId + "\",";
     json += "\"isUserRegistered\":" + String(isUserRegistered ? "true" : "false");
     json += "}";
 

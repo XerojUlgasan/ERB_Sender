@@ -27,7 +27,7 @@ class SenderProfile
         ~SenderProfile();
 
         bool checkExist();
-        String toJsonString();
+        String toJsonString(const String &deviceId = "");
         void setSenderProfile(String firstname, String lastname, String middlename, String birthdate,
                             String emergency_contact, String emergency_person, String region,
                             String city_municipality, String barangay, String contact);

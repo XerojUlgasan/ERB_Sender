@@ -18,7 +18,7 @@ SenderProfile sender; // Global sender object
 
 bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
 
-  Serial.println(sender.toJsonString());
+  Serial.println(sender.toJsonString(device_id));
  
   server.on( // TYPE
     "/type", 
@@ -31,7 +31,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
       "application/json",
       json);
 
-      Serial.println(sender.toJsonString());
+      Serial.println(sender.toJsonString(device_id));
   });
 
   server.on(
@@ -48,7 +48,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
             request->send(
                 200,
                 "application/json",
-                sender.toJsonString()
+                sender.toJsonString(device_id)
             );
         }
     }
@@ -87,7 +87,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
 
         request->send(200);
 
-        Serial.println(sender.toJsonString());
+        Serial.println(sender.toJsonString(device_id));
     }
   );
 
