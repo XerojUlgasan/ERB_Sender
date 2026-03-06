@@ -14,7 +14,6 @@ SenderProfile::~SenderProfile()
 }
 
 bool SenderProfile::checkExist() {
-    applyPreferences();
 
     // All fields are required except middlename
     if(myProfile.firstname.isEmpty() || myProfile.lastname.isEmpty() || 

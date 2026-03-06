@@ -71,7 +71,9 @@ void enqueueLoraSend(GPSData *dataPtr) {
 void setup() {
   esp_task_wdt_init(15, true);
 
-  WiFi.mode(WIFI_AP);
+  WiFi.mode(WIFI_AP_STA);
+  
+  WiFi.begin("Ulgasan", "XerojHaha123?");
   WiFi.softAP(device_id, "Malopit123");
   Serial.begin(115200);
 
@@ -100,6 +102,10 @@ void setup() {
       1  // run on core 1 to keep core 0 freer
     );
   }
+
+
+  delay(500);
+  Serial.println(WiFi.localIP());
 }
 
 #include "./helpers/clickHandler.h"
