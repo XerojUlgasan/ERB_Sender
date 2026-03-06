@@ -3,6 +3,8 @@
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
 
+Profile SenderProfile::dummyProfile = {};
+
 SenderProfile::SenderProfile()
 {
     applyPreferences();
@@ -28,10 +30,13 @@ bool SenderProfile::checkExist() {
 }
 
 String SenderProfile::toJsonString(const String &deviceId) {
+
+    applyPreferences();
+
     this->senderPref.begin("secret");
     bool isUserRegistered = senderPref.getBool("hasUser");
     String user_id = senderPref.getString("user_id");
-
+    
     String json = "{";
     json += "\"firstname\":\"" + myProfile.firstname + "\",";
     json += "\"lastname\":\"" + myProfile.lastname + "\",";
@@ -67,6 +72,22 @@ void SenderProfile::setSenderProfile(String firstname, String lastname, String m
     myProfile.barangay = barangay;
     myProfile.contact = contact;
 
+    // Save to persistent storage immediately
+    senderPref.begin("user_profile");
+    senderPref.putString("firstname", myProfile.firstname);
+    senderPref.putString("lastname", myProfile.lastname);
+    senderPref.putString("middlename", myProfile.middlename);
+    senderPref.putString("birthdate", myProfile.birthdate);
+    senderPref.putString("em_contact", myProfile.emergency_contact);
+    senderPref.putString("em_person", myProfile.emergency_person);
+    senderPref.putString("region", myProfile.region);
+    senderPref.putString("city_muni", myProfile.city_municipality);
+    senderPref.putString("barangay", myProfile.barangay);
+    senderPref.putString("contact", myProfile.contact);
+    senderPref.end();
+
+    Serial.println("Profile saved to persistent storage");
+
     return;
 }
 
@@ -79,6 +100,7 @@ void SenderProfile::deleteProfile() {
     this->senderPref.clear();
     Serial.println("PROFIEL DELETED");
     this->senderPref.end();
+
     this->senderPref.begin("secret");
     this->senderPref.clear();
     Serial.println("SECRET DELETED");
@@ -89,15 +111,44 @@ void SenderProfile::applyPreferences(){
     senderPref.begin("user_profile");
 
     myProfile.firstname = senderPref.getString("firstname", "");
+    Serial.print("Firstname: ");
+    Serial.println(myProfile.firstname);
+
     myProfile.lastname = senderPref.getString("lastname", "");
+    Serial.print("Lastname: ");
+    Serial.println(myProfile.lastname);
+
     myProfile.middlename = senderPref.getString("middlename", "");
+    Serial.print("Middlename: ");
+    Serial.println(myProfile.middlename);
+
     myProfile.birthdate = senderPref.getString("birthdate", "");
+    Serial.print("Birthdate: ");
+    Serial.println(myProfile.birthdate);
+
     myProfile.emergency_contact = senderPref.getString("em_contact", "");
+    Serial.print("Emergency Contact: ");
+    Serial.println(myProfile.emergency_contact);
+
     myProfile.emergency_person = senderPref.getString("em_person", "");
+    Serial.print("Emergency Person: ");
+    Serial.println(myProfile.emergency_person);
+
     myProfile.region = senderPref.getString("region", "");
+    Serial.print("Region: ");
+    Serial.println(myProfile.region);
+
     myProfile.city_municipality = senderPref.getString("city_muni", "");
+    Serial.print("City/Municipality: ");
+    Serial.println(myProfile.city_municipality);
+
     myProfile.barangay = senderPref.getString("barangay", "");
+    Serial.print("Barangay: ");
+    Serial.println(myProfile.barangay);
+
     myProfile.contact = senderPref.getString("contact", "");
+    Serial.print("Contact: ");
+    Serial.println(myProfile.contact);
     
     senderPref.end();
 
@@ -126,27 +177,27 @@ bool SenderProfile::uploadToAPI(String deviceId) {
         Serial.println("WiFi not connected!");
         return false;
     }
-    if(!SenderProfile::checkExist()){
-        Serial.println("Error in user profile maybe lack of field or does not exists.");
-        return false;
-    }
+    // if(!SenderProfile::checkExist()){
+    //     Serial.println("Error in user profile maybe lack of field or does not exists.");
+    //     return false;
+    // }
 
     JsonDocument doc;
-    doc["user_fn"] = myProfile.firstname;
-    doc["user_ln"] = myProfile.lastname;
-    doc["birthdate"] = myProfile.birthdate;
-    doc["region"] = myProfile.region;
-    doc["city_minucipality"] = myProfile.city_municipality;
-    doc["barangay"] = myProfile.barangay;
-    doc["contact"] = myProfile.contact;
-    doc["em_contact"] = myProfile.emergency_contact;
-    doc["em_person"] = myProfile.emergency_person;
+    doc["user_fn"] = dummyProfile.firstname;
+    doc["user_ln"] = dummyProfile.lastname;
+    doc["birthdate"] = dummyProfile.birthdate;
+    doc["region"] = dummyProfile.region;
+    doc["city_minucipality"] = dummyProfile.city_municipality;
+    doc["barangay"] = dummyProfile.barangay;
+    doc["contact"] = dummyProfile.contact;
+    doc["em_contact"] = dummyProfile.emergency_contact;
+    doc["em_person"] = dummyProfile.emergency_person;
     doc["device_id"] = deviceId;
 
-    if(myProfile.middlename.isEmpty()){
+    if(dummyProfile.middlename.isEmpty()){
         doc["user_mn"] = nullptr;
     }else{
-        doc["user_mn"] = myProfile.middlename;
+        doc["user_mn"] = dummyProfile.middlename;
     }
 
     String payload;
@@ -204,18 +255,20 @@ bool SenderProfile::uploadToAPI(String deviceId) {
             senderPref.end();
 
             senderPref.begin("user_profile");
-            senderPref.putString("firstname", myProfile.firstname);
-            senderPref.putString("lastname", myProfile.lastname);
-            senderPref.putString("middlename", myProfile.middlename);
-            senderPref.putString("birthdate", myProfile.birthdate);
-            senderPref.putString("em_contact", myProfile.emergency_contact);
-            senderPref.putString("em_person", myProfile.emergency_person);
-            senderPref.putString("region", myProfile.region);
-            senderPref.putString("city_muni", myProfile.city_municipality);
-            senderPref.putString("barangay", myProfile.barangay);
-            senderPref.putString("contact", myProfile.contact);
+            senderPref.putString("firstname", dummyProfile.firstname);
+            senderPref.putString("lastname", dummyProfile.lastname);
+            senderPref.putString("middlename", dummyProfile.middlename);
+            senderPref.putString("birthdate", dummyProfile.birthdate);
+            senderPref.putString("em_contact", dummyProfile.emergency_contact);
+            senderPref.putString("em_person", dummyProfile.emergency_person);
+            senderPref.putString("region", dummyProfile.region);
+            senderPref.putString("city_muni", dummyProfile.city_municipality);
+            senderPref.putString("barangay", dummyProfile.barangay);
+            senderPref.putString("contact", dummyProfile.contact);
             senderPref.end();
-
+            
+            applyPreferences();
+        
             return true;
         }
         

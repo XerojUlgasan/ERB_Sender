@@ -39,18 +39,18 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
     HTTP_GET,
     [&pref](AsyncWebServerRequest *request){
 
-        if(!sender.checkExist()){
-            String json = "{\n\"profile_exist\": false\n}";
+        // if(!sender.checkExist()){
+        //     String json = "{\n\"profile_exist\": false\n}";
 
-            request->send(204);
-        }
-        else{
+        //     request->send(204);
+        // }
+        // else{
             request->send(
                 200,
                 "application/json",
                 sender.toJsonString(device_id)
             );
-        }
+        // }
     }
   );
 
@@ -81,13 +81,26 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
             return;
         }
 
-        sender.setSenderProfile(firstname, lastname, middlename, birthdate,
-                               emergency_contact, emergency_person, region,
-                               city_municipality, barangay, contact);
+        sender.dummyProfile = {
+            firstname,
+            lastname,
+            middlename,
+            birthdate,
+            emergency_contact,
+            emergency_person,
+            region,
+            city_municipality,
+            barangay,
+            contact
+        };
+
+        // sender.setSenderProfile(firstname, lastname, middlename, birthdate,
+        //                        emergency_contact, emergency_person, region,
+        //                        city_municipality, barangay, contact);
 
         request->send(200);
 
-        Serial.println(sender.toJsonString(device_id));
+        // Serial.println(sender.toJsonString(device_id));
     }
   );
 

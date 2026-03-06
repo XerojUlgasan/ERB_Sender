@@ -23,6 +23,7 @@ class SenderProfile
         Profile myProfile;
         Preferences senderPref;
     public:
+        static Profile dummyProfile;
         SenderProfile();
         ~SenderProfile();
 
