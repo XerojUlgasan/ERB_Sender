@@ -39,18 +39,18 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
     HTTP_GET,
     [&pref](AsyncWebServerRequest *request){
 
-        // if(!sender.checkExist()){
-        //     String json = "{\n\"profile_exist\": false\n}";
+        if(!sender.checkExist()){
+            String json = "{\n\"profile_exist\": false\n}";
 
-        //     request->send(204);
-        // }
-        // else{
+            request->send(204);
+        }
+        else{
             request->send(
                 200,
                 "application/json",
                 sender.toJsonString(device_id)
             );
-        // }
+        }
     }
   );
 

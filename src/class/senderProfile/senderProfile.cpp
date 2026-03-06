@@ -16,6 +16,7 @@ SenderProfile::~SenderProfile()
 }
 
 bool SenderProfile::checkExist() {
+    applyPreferences();
 
     // All fields are required except middlename
     if(myProfile.firstname.isEmpty() || myProfile.lastname.isEmpty() || 
@@ -177,6 +178,7 @@ bool SenderProfile::uploadToAPI(String deviceId) {
         Serial.println("WiFi not connected!");
         return false;
     }
+    
     // if(!SenderProfile::checkExist()){
     //     Serial.println("Error in user profile maybe lack of field or does not exists.");
     //     return false;
