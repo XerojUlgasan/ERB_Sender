@@ -67,20 +67,6 @@ void SenderProfile::setSenderProfile(String firstname, String lastname, String m
     myProfile.city_municipality = city_municipality;
     myProfile.barangay = barangay;
     myProfile.contact = contact;
-    
-    senderPref.begin("user_profile");
-
-    senderPref.putString("firstname", firstname);
-    senderPref.putString("lastname", lastname);
-    senderPref.putString("middlename", middlename);
-    senderPref.putString("birthdate", birthdate);
-    senderPref.putString("em_contact", emergency_contact);
-    senderPref.putString("em_person", emergency_person);
-    senderPref.putString("region", region);
-    senderPref.putString("city_muni", city_municipality);
-    senderPref.putString("barangay", barangay);
-    senderPref.putString("contact", contact);
-    senderPref.end();
 
     return;
 }
@@ -195,27 +181,45 @@ bool SenderProfile::uploadToAPI(String deviceId) {
         String response = http.getString();
         http.end();
         
-        JsonDocument respDoc;
-        DeserializationError error = deserializeJson(respDoc, response);
+        Serial.println("API Response (" + String(statusCode) + "): " + response);
         
-        if(error) {
-            Serial.println("JSON parsing error in response");
-            return false;
+        if(statusCode == 200) {
+            JsonDocument respDoc;
+            DeserializationError error = deserializeJson(respDoc, response);
+            
+            if(error) {
+                Serial.println("JSON parsing error in response");
+                return false;
+            }
+            
+            String user_id = respDoc["user_id"].as<String>();
+            String access_key = respDoc["access_key"].as<String>();
+            
+            Serial.println("USER ID    : " + user_id);
+            Serial.println("Access Key : " + access_key);
+            
+            senderPref.begin("secret");
+            senderPref.putString("user_id", user_id);
+            senderPref.putString("access_key", access_key);
+            senderPref.putBool("hasUser", true);
+            senderPref.end();
+
+            senderPref.begin("user_profile");
+            senderPref.putString("firstname", myProfile.firstname);
+            senderPref.putString("lastname", myProfile.lastname);
+            senderPref.putString("middlename", myProfile.middlename);
+            senderPref.putString("birthdate", myProfile.birthdate);
+            senderPref.putString("em_contact", myProfile.emergency_contact);
+            senderPref.putString("em_person", myProfile.emergency_person);
+            senderPref.putString("region", myProfile.region);
+            senderPref.putString("city_muni", myProfile.city_municipality);
+            senderPref.putString("barangay", myProfile.barangay);
+            senderPref.putString("contact", myProfile.contact);
+            senderPref.end();
+
+            return true;
         }
         
-        String user_id = respDoc["user_id"].as<String>();
-        String access_key = respDoc["access_key"].as<String>();
-        
-        Serial.println("USER ID    : " + user_id);
-        Serial.println("Access Key : " + access_key);
-        
-        senderPref.begin("secret");
-        senderPref.putString("user_id", user_id);
-        senderPref.putString("access_key", access_key);
-        senderPref.putBool("hasUser", true);
-        senderPref.end();
-        
-        Serial.println("API Response (" + String(statusCode) + "): " + response);
         return statusCode >= 200 && statusCode < 300;
     }
     http.end();
