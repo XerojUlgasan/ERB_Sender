@@ -73,7 +73,7 @@ void setup() {
 
   WiFi.mode(WIFI_AP_STA);
   
-  WiFi.begin("Ulgasan", "XerojHaha123?");
+  // WiFi.begin("Ulgasan", "XerojHaha123?");
   WiFi.softAP(device_id, "Malopit123");
   Serial.begin(115200);
 

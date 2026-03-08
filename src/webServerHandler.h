@@ -169,6 +169,9 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
           Serial.println("Connected!");
           request->send(200, "application/json", jsonString);
         } else {
+          Serial.println("Connection failed, cleaning up WiFi state...");
+          WiFi.disconnect(true);  // Disconnect and clear credentials
+          delay(100);             // Give time for cleanup
           request->send(400, "application/json", jsonString);
         }
       }

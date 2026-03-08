@@ -6,6 +6,8 @@
 #include <vector>
 
 void detectNetworks(std::vector<String> &ssid, std::vector<bool> &isSecure) {
+    // Ensure WiFi is in proper state for scanning
+    WiFi.disconnect();
     delay(100);
 
     int n = WiFi.scanNetworks(false, true); // false = not async, true = show hidden networks
