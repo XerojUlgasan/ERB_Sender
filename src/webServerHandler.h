@@ -16,6 +16,8 @@ extern const String device_id;
 AsyncWebServer server(80);
 SenderProfile sender; // Global sender object
 
+const char* SAVED_NETWORKS_KEY = "saved_networks";
+
 bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
 
   Serial.println(sender.toJsonString(device_id));
@@ -137,6 +139,120 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
         request->send(200, "application/json", json);
         Serial.println("Response sent");
     });
+
+    server.on(
+      "/saveNetwork",
+      HTTP_POST,
+      [&pref](AsyncWebServerRequest *request, JsonVariant &json) {
+        String ssid = json["ssid"].as<String>();
+        String pass = json["password"].as<String>();
+
+        // Missing or invalid priority is treated as lowest priority.
+        int requestedPriority = json["priority"].isNull() ? -1 : json["priority"].as<int>();
+
+        if (ssid.isEmpty()) {
+          request->send(400, "application/json", "{\"error\":\"ssid is required\"}");
+          return;
+        }
+
+        pref.begin("secret");
+
+        String storedNetworks = pref.getString(SAVED_NETWORKS_KEY, "[]");
+        JsonDocument currentDoc;
+        DeserializationError parseError = deserializeJson(currentDoc, storedNetworks);
+
+        if (parseError || !currentDoc.is<JsonArray>()) {
+          currentDoc.clear();
+          currentDoc.to<JsonArray>();
+        }
+
+        JsonArray currentNetworks = currentDoc.as<JsonArray>();
+
+        int insertIndex = currentNetworks.size();
+        if (requestedPriority > 0) {
+          insertIndex = requestedPriority - 1;
+          if (insertIndex < 0) {
+            insertIndex = 0;
+          }
+          if (insertIndex > (int)currentNetworks.size()) {
+            insertIndex = currentNetworks.size();
+          }
+        }
+
+        // Keep only one record per SSID by removing existing entry first.
+        for (int i = 0; i < (int)currentNetworks.size(); i++) {
+          if (currentNetworks[i]["ssid"].as<String>() == ssid) {
+            currentNetworks.remove(i);
+            if (i < insertIndex) {
+              insertIndex--;
+            }
+            break;
+          }
+        }
+
+        JsonDocument orderedDoc;
+        JsonArray orderedNetworks = orderedDoc.to<JsonArray>();
+
+        for (int i = 0; i <= (int)currentNetworks.size(); i++) {
+          if (i == insertIndex) {
+            JsonObject inserted = orderedNetworks.createNestedObject();
+            inserted["ssid"] = ssid;
+            inserted["password"] = pass;
+          }
+
+          if (i < (int)currentNetworks.size()) {
+            JsonObject source = currentNetworks[i];
+            JsonObject copied = orderedNetworks.createNestedObject();
+            copied["ssid"] = source["ssid"].as<String>();
+            copied["password"] = source["password"].as<String>();
+          }
+        }
+
+        String output;
+        serializeJson(orderedDoc, output);
+        pref.putString(SAVED_NETWORKS_KEY, output);
+        pref.end();
+
+        JsonDocument responseDoc;
+        responseDoc["saved"] = true;
+        responseDoc["count"] = orderedNetworks.size();
+        responseDoc["networks"] = orderedNetworks;
+
+        String response;
+        serializeJson(responseDoc, response);
+
+        request->send(200, "application/json", response);
+      }
+    );
+
+    server.on(
+      "/getSavedNetworks",
+      HTTP_GET,
+      [&pref](AsyncWebServerRequest *request) {
+        pref.begin("secret", true);
+        String storedNetworks = pref.getString(SAVED_NETWORKS_KEY, "[]");
+        pref.end();
+
+        JsonDocument storedDoc;
+        DeserializationError parseError = deserializeJson(storedDoc, storedNetworks);
+
+        if (parseError || !storedDoc.is<JsonArray>()) {
+          storedDoc.clear();
+          storedDoc.to<JsonArray>();
+        }
+
+        JsonArray networks = storedDoc.as<JsonArray>();
+
+        JsonDocument responseDoc;
+        responseDoc["count"] = networks.size();
+        responseDoc["networks"] = networks;
+
+        String response;
+        serializeJson(responseDoc, response);
+
+        request->send(200, "application/json", response);
+      }
+    );
 
     server.on(
       "/setNetwork",
