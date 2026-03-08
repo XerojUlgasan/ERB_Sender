@@ -194,6 +194,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
 
         if(WiFi.status() == WL_CONNECTED) {
           delay(1000);
+          Serial.println("Wifi is already connected to " + WiFi.SSID() + ". Disconnecting...");
           WiFi.mode(WIFI_STA);
         }
       }
