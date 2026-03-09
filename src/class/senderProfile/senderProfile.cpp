@@ -318,11 +318,14 @@ bool SenderProfile::sendEmergencyEvent(const GPSData &data) {
     doc["ping_count"] = data.ping_count;
     doc["receiver_device_id"] = data.device_id;
     doc["emergency_id"] = data.emergency_id;
+    doc["bounces"] = data.bounce;
     doc["is_click"] = data.isClick;
     doc["is_cancel"] = data.isCancellation;
 
     String payload;
     serializeJson(doc, payload);
+
+    Serial.println("PAYLOAD : " + payload);
 
     WiFiClientSecure client;
     client.setInsecure();

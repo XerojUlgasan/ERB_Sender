@@ -16,6 +16,7 @@
 
 #include "./class/myGps/MyGps.h"
 #include "class/myLora/MyLora.h"
+#include "./helpers/loraDataHandler.h"
 
 
 //TODO : Proper sanitation in Senderprofile.setProfile
@@ -106,7 +107,6 @@ void setup() {
     );
   }
 
-
   delay(500);
   Serial.println(WiFi.localIP());
 }
@@ -120,6 +120,9 @@ void loop() {
   if(isRegistered) clickHandler(); // ONLY ALLOW IF A USER IS REGISTERED TO THIS DEVICE
 
   pref.end();
+  
+  // Handle incoming LoRa packets from other senders
+  handleLoraReceivedData();
   
   // Continuously read GPS data to keep TinyGPS++ buffer updated
   // gps.getLocation();

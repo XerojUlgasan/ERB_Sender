@@ -13,6 +13,8 @@ private:
 public:
     static String receivedMessage;
     static bool packetReceived;
+    static GPSData receivedGPSData;
+    static bool structPacketReceived;
 
     MyLora(int nss, int rst, int dio);
     ~MyLora();
@@ -22,6 +24,7 @@ public:
     void sendPacketStruct(GPSData &gpsData);
     void startReceive();
     void stopReceive();
+    bool receivePacketStruct(GPSData &outData);
 };
 
 #endif

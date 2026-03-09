@@ -16,6 +16,7 @@ struct GPSData
     bool isLocValid;
     bool isAltValid;
     bool isSpdValid;
+    uint8_t bounce = 0;
 };
 #pragma pack(pop)
 

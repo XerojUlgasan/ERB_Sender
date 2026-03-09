@@ -6,6 +6,8 @@
 
 String MyLora::receivedMessage = "";
 bool MyLora::packetReceived = false;
+GPSData MyLora::receivedGPSData = {};
+bool MyLora::structPacketReceived = false;
 
 void onReceive(int packetSize);
 
@@ -78,15 +80,38 @@ void MyLora::stopReceive(){
     return;
 }
 
+bool MyLora::receivePacketStruct(GPSData &outData){
+    if(!structPacketReceived) return false;
+    
+    outData = receivedGPSData;
+    structPacketReceived = false;
+    return true;
+}
+
 void onReceive(int packetSize){
     if(packetSize == 0) return;
     
-    MyLora::receivedMessage = "";
-
-    while (LoRa.available()) {
-        MyLora::receivedMessage += (char)LoRa.read();
+    // Check if packet size matches GPSData struct
+    if(packetSize == sizeof(GPSData)) {
+        // Read binary struct
+        uint8_t buffer[sizeof(GPSData)];
+        int bytesRead = 0;
+        
+        while(LoRa.available() && bytesRead < packetSize) {
+            buffer[bytesRead++] = LoRa.read();
+        }
+        
+        if(bytesRead == sizeof(GPSData)) {
+            memcpy(&MyLora::receivedGPSData, buffer, sizeof(GPSData));
+            MyLora::structPacketReceived = true;
+        }
+    } else {
+        // Fall back to string message
+        MyLora::receivedMessage = "";
+        while (LoRa.available()) {
+            MyLora::receivedMessage += (char)LoRa.read();
+        }
+        MyLora::packetReceived = true;
     }
-
-    MyLora::packetReceived = true;
     return;
 }
