@@ -54,30 +54,23 @@ void MyLora::sendPacket(String message){
 }
 
 void MyLora::sendPacketStruct(GPSData &gpsData){
-    Serial.println("Sending GPSData packet over LoRa...");
+    Serial.println("Sending Struct....");
 
-    JsonDocument doc;
-    doc["lon"] = gpsData.lon;
-    doc["lat"] = gpsData.lat;
-    doc["alt"] = gpsData.alt;
-    doc["spd"] = gpsData.spd;
-    doc["device_id"] = gpsData.device_id;
-    doc["emergency_id"] = gpsData.emergency_id;
-    doc["ping_count"] = gpsData.ping_count;
-    doc["is_click"] = gpsData.isClick;
-    doc["is_cancel"] = gpsData.isCancellation;
-    doc["is_loc_valid"] = gpsData.isLocValid;
-    doc["is_alt_valid"] = gpsData.isAltValid;
-    doc["is_spd_valid"] = gpsData.isSpdValid;
+    Preferences pref;
 
-    String payload;
-    serializeJson(doc, payload);
+    Serial.println(gpsData.device_id);
+    Serial.println(gpsData.emergency_id);
+    Serial.println(gpsData.lat);
+    Serial.println(gpsData.lon);
+    Serial.println(gpsData.alt);
+    Serial.println(gpsData.spd);
+    Serial.println(gpsData.ping_count);
 
     LoRa.beginPacket();
-    LoRa.print(payload);
+    LoRa.write((uint8_t*)&gpsData, sizeof(gpsData));
     LoRa.endPacket();
 
-    Serial.println("LoRa sent GPS JSON: " + payload);
+    Serial.println("Lora Send Struct");
 }
 
 bool MyLora::parsePacketToStruct(const String &packet, GPSData &gpsData) {

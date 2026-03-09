@@ -113,20 +113,22 @@ void enqueueLoraSend(GPSData *dataPtr) {
   }
 }
 
+GPSData dummy;
+
 void sendDummyLoraData() {
-  GPSData dummy;
+  
   dummy.lon = 121.0123;
   dummy.lat = 14.5678;
   dummy.alt = 50.0;
   dummy.spd = 5.5;
   dummy.device_id = "TEST-999";
   dummy.emergency_id = "DUM99";
-  dummy.ping_count = 1;
   dummy.isClick = true;
   dummy.isCancellation = false;
   dummy.isLocValid = true;
   dummy.isAltValid = true;
   dummy.isSpdValid = true;
+  dummy.ping_count++;
   
   Serial.println("Sending dummy LoRa data...");
   lora.sendPacketStruct(dummy);

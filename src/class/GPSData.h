@@ -10,7 +10,7 @@ struct GPSData
     float spd;
     String device_id;
     String emergency_id;  // 5-char alphanumeric ID for emergency tracking
-    int ping_count;
+    int ping_count = 0;
     bool isClick;
     bool isCancellation;
     bool isLocValid;
