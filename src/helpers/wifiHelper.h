@@ -4,15 +4,11 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <vector>
-#include <Preferences.h>
-#include <ArduinoJson.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 
 void detectNetworks(std::vector<String> &ssid, std::vector<bool> &isSecure) {
     // Ensure WiFi is in proper state for scanning
-    WiFi.disconnect();
-    delay(100);
+    // WiFi.disconnect();
+    
 
     int n = WiFi.scanNetworks(false, true); // false = not async, true = show hidden networks
     // Note: We use sync mode but with proper timeout handling in the web handler
@@ -35,6 +31,7 @@ void detectNetworks(std::vector<String> &ssid, std::vector<bool> &isSecure) {
 
     return;
 }
+
 
 bool autoConnectToSavedNetworks(Preferences &pref) {
     Serial.println("Attempting to auto-connect to saved networks...");
@@ -156,5 +153,4 @@ void startWifiAutoConnect(Preferences &pref) {
     );
     Serial.println("[WiFi Task] Auto-connect task created");
 }
-
 #endif

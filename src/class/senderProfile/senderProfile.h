@@ -2,6 +2,7 @@
 #define SENDERPROFILE_H
 
 #include <Preferences.h>
+#include "../GPSData.h"
 
 struct Profile {
     String firstname;
@@ -21,6 +22,7 @@ class SenderProfile
     private:
         String api_url = "https://er-briwan-api.vercel.app/device/registerUser"; 
         String ping_url = "https://er-briwan-api.vercel.app/ping";
+        String event_url = "https://er-briwan-api.vercel.app/device/recordPing";
         Profile myProfile;
         Preferences senderPref;
     public:
@@ -40,6 +42,9 @@ class SenderProfile
         void checkPreferences();
 
         bool uploadToAPI(String deviceId);
+        bool isPingServerReachable();
+        bool sendEmergencyEvent(const GPSData &data);
+        bool sendEmergencyViaInternet(const GPSData &data);
 };
 
 #endif

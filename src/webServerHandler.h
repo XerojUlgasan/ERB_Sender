@@ -298,6 +298,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
           
           String errorResponse;
           serializeJson(errorDoc, errorResponse);
+          Serial.println(errorResponse);
           request->send(404, "application/json", errorResponse);
           return;
         }
