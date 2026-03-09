@@ -255,6 +255,92 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
     );
 
     server.on(
+      "/removeSavedNetwork",
+      HTTP_DELETE,
+      [&pref](AsyncWebServerRequest *request, JsonVariant &json) {
+        String ssidToRemove = json["ssid"].as<String>();
+
+        if (ssidToRemove.isEmpty()) {
+          request->send(400, "application/json", "{\"error\":\"ssid is required\"}");
+          return;
+        }
+
+        pref.begin("secret");
+        String storedNetworks = pref.getString(SAVED_NETWORKS_KEY, "[]");
+        
+        JsonDocument currentDoc;
+        DeserializationError parseError = deserializeJson(currentDoc, storedNetworks);
+
+        if (parseError || !currentDoc.is<JsonArray>()) {
+          pref.end();
+          request->send(404, "application/json", "{\"error\":\"No saved networks found\"}");
+          return;
+        }
+
+        JsonArray currentNetworks = currentDoc.as<JsonArray>();
+        bool found = false;
+        int removedIndex = -1;
+
+        // Find and mark the network to remove
+        for (int i = 0; i < (int)currentNetworks.size(); i++) {
+          if (currentNetworks[i]["ssid"].as<String>() == ssidToRemove) {
+            found = true;
+            removedIndex = i;
+            break;
+          }
+        }
+
+        if (!found) {
+          pref.end();
+          JsonDocument errorDoc;
+          errorDoc["error"] = "Network not found";
+          errorDoc["ssid"] = ssidToRemove;
+          
+          String errorResponse;
+          serializeJson(errorDoc, errorResponse);
+          request->send(404, "application/json", errorResponse);
+          return;
+        }
+
+        // Create new array without the removed network
+        JsonDocument newDoc;
+        JsonArray newNetworks = newDoc.to<JsonArray>();
+
+        for (int i = 0; i < (int)currentNetworks.size(); i++) {
+          if (i != removedIndex) {
+            JsonObject source = currentNetworks[i];
+            JsonObject copied = newNetworks.createNestedObject();
+            copied["ssid"] = source["ssid"].as<String>();
+            copied["password"] = source["password"].as<String>();
+          }
+        }
+
+        // Save updated list
+        String output;
+        serializeJson(newDoc, output);
+        pref.putString(SAVED_NETWORKS_KEY, output);
+        pref.end();
+
+        // Disconnect if currently connected to this network
+        if (WiFi.status() == WL_CONNECTED && WiFi.SSID() == ssidToRemove) {
+          Serial.printf("Disconnecting from %s as it was removed from saved networks\n", ssidToRemove.c_str());
+          WiFi.disconnect(true);
+        }
+
+        // Send success response
+        JsonDocument responseDoc;
+        responseDoc["removed"] = true;
+        responseDoc["ssid"] = ssidToRemove;
+        responseDoc["remaining_count"] = newNetworks.size();
+
+        String response;
+        serializeJson(responseDoc, response);
+
+        request->send(200, "application/json", response);
+      }
+    );
+
+    server.on(
       "/setNetwork",
       HTTP_POST,
       [](AsyncWebServerRequest *request, JsonVariant &json){
@@ -311,11 +397,12 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
           jsonString
         );
 
-        if(WiFi.status() == WL_CONNECTED) {
-          delay(1000);
-          Serial.println("Wifi is already connected to " + WiFi.SSID() + ". Disconnecting...");
-          WiFi.mode(WIFI_STA);
-        }
+        //NOTE: THIS IS FOR AUTO DISABLE "AP" OF ESP32
+        // if(WiFi.status() == WL_CONNECTED) {
+        //   delay(1000);
+        //   Serial.println("Wifi is already connected to " + WiFi.SSID() + ". Disconnecting...");
+        //   WiFi.mode(WIFI_STA);
+        // }
       }
     );
 

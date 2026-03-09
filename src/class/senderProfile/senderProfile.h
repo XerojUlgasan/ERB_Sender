@@ -20,6 +20,7 @@ class SenderProfile
 {
     private:
         String api_url = "https://er-briwan-api.vercel.app/device/registerUser"; 
+        String ping_url = "https://er-briwan-api.vercel.app/ping";
         Profile myProfile;
         Preferences senderPref;
     public:
