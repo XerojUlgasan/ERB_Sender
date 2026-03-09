@@ -33,6 +33,10 @@ int ping_count = 0;
 Preferences pref;
 MyGps gps;
 MyLora lora(5, 14, 26);
+// SenderProfile sender;
+
+IPAddress primaryDNS(1,1,1,1);      // Cloudflare
+IPAddress secondaryDNS(8,8,8,8);    // Google
 
 // Queue and task for asynchronous LoRa sending
 QueueHandle_t loraQueue = nullptr;
@@ -92,6 +96,7 @@ void setup() {
   gps.begin();
   lora.begin();
   lora.startReceive();
+  sender.device_id = device_id;
 
   // Create queue and LoRa sender task
   loraQueue = xQueueCreate(10, sizeof(GPSData *));

@@ -59,6 +59,10 @@ void MyLora::sendPacketStruct(GPSData &gpsData){
 
     Preferences pref;
 
+    Serial.println(gpsData.device_id);
+    Serial.println(gpsData.emergency_id);
+    Serial.println(gpsData.bounce);
+
     LoRa.beginPacket();
     LoRa.write((uint8_t*)&gpsData, sizeof(gpsData));
     LoRa.endPacket();
@@ -89,6 +93,7 @@ bool MyLora::receivePacketStruct(GPSData &outData){
 }
 
 void onReceive(int packetSize){
+    Serial.println("PACKET RECEIVED!");
     if(packetSize == 0) return;
     
     // Check if packet size matches GPSData struct

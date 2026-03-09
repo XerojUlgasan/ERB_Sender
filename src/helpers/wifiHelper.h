@@ -4,6 +4,38 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <vector>
+#include <esp_netif.h>
+#include <lwip/ip_addr.h>
+
+extern IPAddress primaryDNS;
+extern IPAddress secondaryDNS;
+
+void forceStaDns(IPAddress primary, IPAddress secondary) {
+    esp_netif_t* sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (!sta) {
+        Serial.println("[DNS] Failed to get STA netif handle");
+        return;
+    }
+
+    esp_netif_dns_info_t dns;
+
+    // Set primary DNS
+    dns.ip.type = IPADDR_TYPE_V4;
+    dns.ip.u_addr.ip4.addr = ipaddr_addr(primary.toString().c_str());
+    esp_err_t ret1 = esp_netif_set_dns_info(sta, ESP_NETIF_DNS_MAIN, &dns);
+
+    // Set secondary DNS
+    dns.ip.type = IPADDR_TYPE_V4;
+    dns.ip.u_addr.ip4.addr = ipaddr_addr(secondary.toString().c_str());
+    esp_err_t ret2 = esp_netif_set_dns_info(sta, ESP_NETIF_DNS_BACKUP, &dns);
+
+    if (ret1 == ESP_OK && ret2 == ESP_OK) {
+        Serial.printf("[DNS] Set to %s (primary) and %s (secondary)\n", 
+                      primary.toString().c_str(), secondary.toString().c_str());
+    } else {
+        Serial.printf("[DNS] Failed to set DNS - primary: %d, secondary: %d\n", ret1, ret2);
+    }
+}
 
 void detectNetworks(std::vector<String> &ssid, std::vector<bool> &isSecure) {
     // Ensure WiFi is in proper state for scanning
@@ -96,6 +128,7 @@ bool autoConnectToSavedNetworks(Preferences &pref) {
                 if (WiFi.status() == WL_CONNECTED) {
                     Serial.printf("Successfully connected to %s\n", savedSsid.c_str());
                     Serial.printf("IP address: %s\n", WiFi.localIP().toString().c_str());
+                    forceStaDns(primaryDNS, secondaryDNS);
                     WiFi.scanDelete();
                     return true;
                 } else {

@@ -6,6 +6,10 @@
 #include <WiFiClientSecure.h>
 
 Profile SenderProfile::dummyProfile = {};
+String SenderProfile::device_id = "";
+String SenderProfile::api_url = "https://er-briwan-api.vercel.app/device/registerUser";
+String SenderProfile::ping_url = "https://er-briwan-api.vercel.app/ping";
+String SenderProfile::event_url = "https://er-briwan-api.vercel.app/device/recordPing";
 
 SenderProfile::SenderProfile()
 {
@@ -294,8 +298,12 @@ bool SenderProfile::isPingServerReachable() {
 
     HTTPClient http;
     http.setTimeout(15000);
-    http.begin(client, this->ping_url);
+    http.begin(client, ping_url);
 
+    Serial.println(ping_url);
+    Serial.println(WiFi.dnsIP(0)); // Primary DNS
+    Serial.println(WiFi.dnsIP(1)); // Secondary DNS
+    
     int statusCode = http.GET();
     http.end();
 
@@ -316,7 +324,7 @@ bool SenderProfile::sendEmergencyEvent(const GPSData &data) {
     doc["altitude"] = data.alt;
     doc["speed_kmph"] = data.spd;
     doc["ping_count"] = data.ping_count;
-    doc["receiver_device_id"] = data.device_id;
+    doc["receiver_device_id"] = device_id;
     doc["emergency_id"] = data.emergency_id;
     doc["bounces"] = data.bounce;
     doc["is_click"] = data.isClick;
@@ -333,7 +341,7 @@ bool SenderProfile::sendEmergencyEvent(const GPSData &data) {
 
     HTTPClient http;
     http.setTimeout(20000);
-    http.begin(client, this->event_url);
+    http.begin(client, event_url);
     http.addHeader("Content-Type", "application/json");
 
     int statusCode = http.POST(payload);

@@ -10,6 +10,7 @@
 #include "./class/senderProfile/senderProfile.h"
 #include "./class/EmergencyHistory.h"
 #include "./helpers/utils.h"
+#include "./helpers/wifiHelper.h"
 
 extern const String device_id;
 
@@ -369,6 +370,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
         serializeJson(doc, jsonString);
         
         if (WiFi.status() == WL_CONNECTED) {
+          forceStaDns(primaryDNS, secondaryDNS);
           Serial.println("Connected!");
           request->send(200, "application/json", jsonString);
         } else {

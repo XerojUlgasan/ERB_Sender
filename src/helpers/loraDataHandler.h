@@ -4,8 +4,10 @@
 #include <Arduino.h>
 #include "../class/GPSData.h"
 #include "../class/myLora/MyLora.h"
+#include "../class/senderProfile/senderProfile.h"
 
 extern MyLora lora;
+extern void enqueueLoraSend(GPSData *dataPtr);
 
 /**
  * Handle incoming LoRa GPSData packets from other senders
@@ -47,6 +49,13 @@ void handleLoraReceivedData() {
         Serial.println(receivedData.isSpdValid ? "Yes" : "No");
         Serial.println("=========================================\n");
 
+        receivedData.bounce++;
+        bool sentViaInternet = SenderProfile::sendEmergencyViaInternet(receivedData);
+        if (!sentViaInternet) {
+            GPSData *ptr = new GPSData;
+            *ptr = receivedData;
+            enqueueLoraSend(ptr);
+        }
         lora.startReceive();
     }
 }

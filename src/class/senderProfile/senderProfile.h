@@ -20,13 +20,14 @@ struct Profile {
 class SenderProfile
 {
     private:
-        String api_url = "https://er-briwan-api.vercel.app/device/registerUser"; 
-        String ping_url = "https://er-briwan-api.vercel.app/ping";
-        String event_url = "https://er-briwan-api.vercel.app/device/recordPing";
         Profile myProfile;
         Preferences senderPref;
     public:
         static Profile dummyProfile;
+        static String device_id;
+        static String api_url;
+        static String ping_url;
+        static String event_url;
         SenderProfile();
         ~SenderProfile();
 
@@ -42,9 +43,9 @@ class SenderProfile
         void checkPreferences();
 
         bool uploadToAPI(String deviceId);
-        bool isPingServerReachable();
-        bool sendEmergencyEvent(const GPSData &data);
-        bool sendEmergencyViaInternet(const GPSData &data);
+        static bool isPingServerReachable();
+        static bool sendEmergencyEvent(const GPSData &data);
+        static bool sendEmergencyViaInternet(const GPSData &data);
 };
 
 #endif
