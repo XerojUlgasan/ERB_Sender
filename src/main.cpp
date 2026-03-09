@@ -36,6 +36,50 @@ MyLora lora(5, 14, 26);
 // Queue and task for asynchronous LoRa sending
 QueueHandle_t loraQueue = nullptr;
 
+struct RelayTracker {
+  bool used;
+  String senderDeviceId;
+  String emergencyId;
+  int lastPingCount;
+};
+
+RelayTracker relayTrackers[30];
+
+bool shouldRelayPacket(const GPSData &data) {
+  if (data.device_id.isEmpty() || data.emergency_id.isEmpty()) {
+    return false;
+  }
+
+  for (int i = 0; i < 30; i++) {
+    if (relayTrackers[i].used &&
+        relayTrackers[i].senderDeviceId == data.device_id &&
+        relayTrackers[i].emergencyId == data.emergency_id) {
+      if (data.ping_count > relayTrackers[i].lastPingCount) {
+        relayTrackers[i].lastPingCount = data.ping_count;
+        return true;
+      }
+      return false;
+    }
+  }
+
+  for (int i = 0; i < 30; i++) {
+    if (!relayTrackers[i].used) {
+      relayTrackers[i].used = true;
+      relayTrackers[i].senderDeviceId = data.device_id;
+      relayTrackers[i].emergencyId = data.emergency_id;
+      relayTrackers[i].lastPingCount = data.ping_count;
+      return true;
+    }
+  }
+
+  // Table full: overwrite oldest slot (simple rotating behavior).
+  relayTrackers[0].used = true;
+  relayTrackers[0].senderDeviceId = data.device_id;
+  relayTrackers[0].emergencyId = data.emergency_id;
+  relayTrackers[0].lastPingCount = data.ping_count;
+  return true;
+}
+
 void loraTask(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
@@ -43,6 +87,7 @@ void loraTask(void *pvParameters) {
     if (xQueueReceive(loraQueue, &dataPtr, portMAX_DELAY) == pdTRUE) {
       if (dataPtr != nullptr) {
         lora.sendPacketStruct(*dataPtr);
+        lora.startReceive();
         delete dataPtr;
         // Enforce at least 10 seconds between any two LoRa packets
         vTaskDelay(pdMS_TO_TICKS(10000));
@@ -65,6 +110,59 @@ void enqueueLoraSend(GPSData *dataPtr) {
   // Non-blocking send; drop packet if queue is full
   if (xQueueSend(loraQueue, &dataPtr, 0) != pdTRUE) {
     delete dataPtr;
+  }
+}
+
+void sendDummyLoraData() {
+  GPSData dummy;
+  dummy.lon = 121.0123;
+  dummy.lat = 14.5678;
+  dummy.alt = 50.0;
+  dummy.spd = 5.5;
+  dummy.device_id = "TEST-999";
+  dummy.emergency_id = "DUM99";
+  dummy.ping_count = 1;
+  dummy.isClick = true;
+  dummy.isCancellation = false;
+  dummy.isLocValid = true;
+  dummy.isAltValid = true;
+  dummy.isSpdValid = true;
+  
+  Serial.println("Sending dummy LoRa data...");
+  lora.sendPacketStruct(dummy);
+  lora.startReceive();
+  Serial.println("Dummy data sent!");
+}
+
+void loraRelayTask(void *pvParameters) {
+  (void)pvParameters;
+
+  for (;;) {
+    GPSData receivedData;
+    if (!lora.consumeReceivedPacket(receivedData)) {
+      vTaskDelay(pdMS_TO_TICKS(50));
+      continue;
+    }
+
+    // Ignore self packets to reduce local echo loops.
+    if (receivedData.device_id == device_id) {
+      vTaskDelay(pdMS_TO_TICKS(10));
+      continue;
+    }
+
+    if (!shouldRelayPacket(receivedData)) {
+      vTaskDelay(pdMS_TO_TICKS(10));
+      continue;
+    }
+
+    bool uploaded = sender.sendEmergencyViaInternet(receivedData, device_id);
+    if (!uploaded) {
+      // Internet path unavailable; repeat the same packet over LoRa.
+      lora.sendPacketStruct(receivedData);
+      lora.startReceive();
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
 
@@ -92,19 +190,29 @@ void setup() {
   lora.begin();
   lora.startReceive();
 
-  // Create queue and LoRa sender task
-  loraQueue = xQueueCreate(10, sizeof(GPSData *));
-  if (loraQueue != nullptr) {
-    xTaskCreatePinnedToCore(
-      loraTask,
-      "LoRaTask",
-      4096,
-      nullptr,
-      1,
-      nullptr,
-      1  // run on core 1 to keep core 0 freer
-    );
-  }
+  // // Create queue and LoRa sender task
+  // loraQueue = xQueueCreate(10, sizeof(GPSData *));
+  // if (loraQueue != nullptr) {
+  //   xTaskCreatePinnedToCore(
+  //     loraTask,
+  //     "LoRaTask",
+  //     4096,
+  //     nullptr,
+  //     1,
+  //     nullptr,
+  //     1  // run on core 1 to keep core 0 freer
+  //   );
+  // }
+
+  // xTaskCreatePinnedToCore(
+  //   loraRelayTask,
+  //   "LoRaRelayTask",
+  //   6144,
+  //   nullptr,
+  //   1,
+  //   nullptr,
+  //   0
+  // );
 
 
   delay(500);
@@ -114,16 +222,18 @@ void setup() {
 #include "./helpers/clickHandler.h"
 
 void loop() {
-  pref.begin("secret");
-  isRegistered = pref.getBool("hasUser");
+  // pref.begin("secret");
+  // isRegistered = pref.getBool("hasUser");
 
-  if(isRegistered) clickHandler(); // ONLY ALLOW IF A USER IS REGISTERED TO THIS DEVICE
+  // if(isRegistered) clickHandler(); // ONLY ALLOW IF A USER IS REGISTERED TO THIS DEVICE
 
-  pref.end();
+  // pref.end();
   
-  // Continuously read GPS data to keep TinyGPS++ buffer updated
-  // gps.getLocation();
+  // // Continuously read GPS data to keep TinyGPS++ buffer updated
+  // // gps.getLocation();
   
-  delay(100);  // Small delay to prevent tight loop
-  // clickHandler();
+  // delay(100);  // Small delay to prevent tight loop
+  // // clickHandler();
+
+  sendDummyLoraData();
 }

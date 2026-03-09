@@ -5,6 +5,7 @@
 #include "../class/myGps/MyGps.h"
 #include "../class/myLora/MyLora.h"
 #include "../class/GPSData.h"
+#include "../class/senderProfile/senderProfile.h"
 #include "../class/EmergencyHistory.h"
 #include "../initializePins.h"
 
@@ -13,6 +14,7 @@ extern MyLora lora;
 extern const String device_id;
 extern int ping_count;
 extern Preferences pref;
+extern SenderProfile sender;
 
 // Asynchronous LoRa sending is handled by a dedicated task in main.cpp.
 // This function enqueues a GPSData pointer for that task to send.
@@ -51,12 +53,18 @@ const unsigned long FOLLOW_PING_INTERVAL  = 10000UL;  // gap between follow ping
 const unsigned long CANCELLATION_INTERVAL = 10000UL;  // gap between cancellation packets (10s)
 const int CANCELLATION_REPEAT_COUNT       = 15;       // send cancellation 15 times
 
-// Helper to build GPSData and enqueue it for async LoRa sending
-void enqueueGpsPacket(bool isClick, bool isCancellation) {
-    GPSData temp = gps.getGPSDataStuct(device_id, ping_count, isClick, isCancellation, currentEmergencyId);
-    GPSData *ptr = new GPSData;
-    *ptr = temp;
-    enqueueLoraSend(ptr);
+// Build distress payload once, try internet first, fallback to LoRa if internet path is unavailable.
+GPSData dispatchDistressPacket(bool isClick, bool isCancellation) {
+    GPSData data = gps.getGPSDataStuct(device_id, ping_count, isClick, isCancellation, currentEmergencyId);
+
+    bool sentViaInternet = sender.sendEmergencyViaInternet(data, device_id);
+    if (!sentViaInternet) {
+        GPSData *ptr = new GPSData;
+        *ptr = data;
+        enqueueLoraSend(ptr);
+    }
+
+    return data;
 }
 
 void clickHandler() {
@@ -65,7 +73,7 @@ void clickHandler() {
     // ---- Periodic follow-up pings while SOS is active ----
     if (sosActive && !cancellationActive) {
         if (lastFollowPingTime == 0 || (now - lastFollowPingTime) >= FOLLOW_PING_INTERVAL) {
-            enqueueGpsPacket(false, false); // following ping
+            dispatchDistressPacket(false, false); // following ping
             lastFollowPingTime = now;
         }
     }
@@ -74,11 +82,10 @@ void clickHandler() {
     if (cancellationActive) {
         if (cancellationPacketsSent < CANCELLATION_REPEAT_COUNT) {
             if (lastCancellationTime == 0 || (now - lastCancellationTime) >= CANCELLATION_INTERVAL) {
-                enqueueGpsPacket(false, true); // cancellation ping
+                GPSData gpsData = dispatchDistressPacket(false, true); // cancellation ping
                 
                 // Record cancellation (END) event on FIRST cancellation packet
                 if (!cancellationRecorded) {
-                    GPSData gpsData = gps.getGPSDataStuct(device_id, ping_count, true, false, currentEmergencyId);
                     pref.begin("secret");
                     recordEmergency(pref, gpsData.lon, gpsData.lat, currentEmergencyId, false);  // Record END (isStart=false)
                     pref.end();
@@ -162,10 +169,9 @@ void clickHandler() {
                 Serial.printf("Generated Emergency ID: %s\n", currentEmergencyId.c_str());
                 
                 // Initial SOS packet (user-triggered)
-                enqueueGpsPacket(true, false);
+                GPSData gpsData = dispatchDistressPacket(true, false);
                 
                 // Record START event in emergency history
-                GPSData gpsData = gps.getGPSDataStuct(device_id, ping_count, true, false, currentEmergencyId);
                 pref.begin("secret");
                 recordEmergency(pref, gpsData.lon, gpsData.lat, currentEmergencyId, true);  // Record START (isStart=true)
                 pref.end();

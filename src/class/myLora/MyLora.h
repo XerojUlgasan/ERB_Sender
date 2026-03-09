@@ -20,6 +20,8 @@ public:
     void begin();
     void sendPacket(String message);
     void sendPacketStruct(GPSData &gpsData);
+    bool parsePacketToStruct(const String &packet, GPSData &gpsData);
+    bool consumeReceivedPacket(GPSData &gpsData);
     void startReceive();
     void stopReceive();
 };

@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <LoRa.h>
 #include <Preferences.h>
+#include <ArduinoJson.h>
 
 #include "MyLora.h"
 
@@ -53,15 +54,70 @@ void MyLora::sendPacket(String message){
 }
 
 void MyLora::sendPacketStruct(GPSData &gpsData){
-    Serial.println("Sending Struct....");
+    Serial.println("Sending GPSData packet over LoRa...");
 
-    Preferences pref;
+    JsonDocument doc;
+    doc["lon"] = gpsData.lon;
+    doc["lat"] = gpsData.lat;
+    doc["alt"] = gpsData.alt;
+    doc["spd"] = gpsData.spd;
+    doc["device_id"] = gpsData.device_id;
+    doc["emergency_id"] = gpsData.emergency_id;
+    doc["ping_count"] = gpsData.ping_count;
+    doc["is_click"] = gpsData.isClick;
+    doc["is_cancel"] = gpsData.isCancellation;
+    doc["is_loc_valid"] = gpsData.isLocValid;
+    doc["is_alt_valid"] = gpsData.isAltValid;
+    doc["is_spd_valid"] = gpsData.isSpdValid;
+
+    String payload;
+    serializeJson(doc, payload);
 
     LoRa.beginPacket();
-    LoRa.write((uint8_t*)&gpsData, sizeof(gpsData));
+    LoRa.print(payload);
     LoRa.endPacket();
 
-    Serial.println("Lora Send Struct");
+    Serial.println("LoRa sent GPS JSON: " + payload);
+}
+
+bool MyLora::parsePacketToStruct(const String &packet, GPSData &gpsData) {
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, packet);
+    if (err) {
+        Serial.println("Failed to parse LoRa packet JSON");
+        return false;
+    }
+
+    gpsData.lon = doc["lon"].as<float>();
+    gpsData.lat = doc["lat"].as<float>();
+    gpsData.alt = doc["alt"].as<float>();
+    gpsData.spd = doc["spd"].as<float>();
+    gpsData.device_id = doc["device_id"].as<String>();
+    gpsData.emergency_id = doc["emergency_id"].as<String>();
+    gpsData.ping_count = doc["ping_count"].as<int>();
+    gpsData.isClick = doc["is_click"].as<bool>();
+    gpsData.isCancellation = doc["is_cancel"].as<bool>();
+    gpsData.isLocValid = doc["is_loc_valid"].as<bool>();
+    gpsData.isAltValid = doc["is_alt_valid"].as<bool>();
+    gpsData.isSpdValid = doc["is_spd_valid"].as<bool>();
+
+    return true;
+}
+
+bool MyLora::consumeReceivedPacket(GPSData &gpsData) {
+    if (!packetReceived) {
+        return false;
+    }
+
+    String packet = receivedMessage;
+    receivedMessage = "";
+    packetReceived = false;
+
+    if (packet.isEmpty()) {
+        return false;
+    }
+
+    return parsePacketToStruct(packet, gpsData);
 }
 
 void MyLora::startReceive(){

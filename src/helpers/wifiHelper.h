@@ -11,8 +11,8 @@
 
 void detectNetworks(std::vector<String> &ssid, std::vector<bool> &isSecure) {
     // Ensure WiFi is in proper state for scanning
-    WiFi.disconnect();
-    delay(100);
+    // WiFi.disconnect();
+    
 
     int n = WiFi.scanNetworks(false, true); // false = not async, true = show hidden networks
     // Note: We use sync mode but with proper timeout handling in the web handler

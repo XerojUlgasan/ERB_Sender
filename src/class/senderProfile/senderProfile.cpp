@@ -2,6 +2,8 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
 
 Profile SenderProfile::dummyProfile = {};
 
@@ -278,4 +280,76 @@ bool SenderProfile::uploadToAPI(String deviceId) {
     }
     http.end();
     return false;
+}
+
+bool SenderProfile::isPingServerReachable() {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("Ping check skipped: WiFi not connected");
+        return false;
+    }
+
+    WiFiClientSecure client;
+    client.setInsecure();
+    client.setTimeout(15);
+
+    HTTPClient http;
+    http.setTimeout(15000);
+    http.begin(client, this->ping_url);
+
+    int statusCode = http.GET();
+    http.end();
+
+    Serial.printf("Ping URL status: %d\n", statusCode);
+    return statusCode == 200;
+}
+
+bool SenderProfile::sendEmergencyEvent(const GPSData &data, const String &receiverDeviceId) {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("Cannot send emergency event: WiFi not connected");
+        return false;
+    }
+
+    JsonDocument doc;
+    doc["device_id"] = data.device_id;
+    doc["longitude"] = data.lon;
+    doc["latitude"] = data.lat;
+    doc["altitude"] = data.alt;
+    doc["speed_kmph"] = data.spd;
+    doc["ping_count"] = data.ping_count;
+    doc["receiver_device_id"] = receiverDeviceId;
+    doc["emergency_id"] = data.emergency_id;
+    doc["is_click"] = data.isClick;
+    doc["is_cancel"] = data.isCancellation;
+
+    String payload;
+    serializeJson(doc, payload);
+
+    WiFiClientSecure client;
+    client.setInsecure();
+    client.setTimeout(20);
+
+    HTTPClient http;
+    http.setTimeout(20000);
+    http.begin(client, this->event_url);
+    http.addHeader("Content-Type", "application/json");
+
+    int statusCode = http.POST(payload);
+    String response = statusCode > 0 ? http.getString() : "";
+    http.end();
+
+    Serial.printf("Event URL status: %d\n", statusCode);
+    if (!response.isEmpty()) {
+        Serial.println("Event response: " + response);
+    }
+
+    return statusCode >= 200 && statusCode < 300;
+}
+
+bool SenderProfile::sendEmergencyViaInternet(const GPSData &data, const String &receiverDeviceId) {
+    // Internet path is allowed only when ping endpoint confirms reachability.
+    if (!isPingServerReachable()) {
+        return false;
+    }
+
+    return sendEmergencyEvent(data, receiverDeviceId);
 }
