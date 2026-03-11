@@ -48,6 +48,7 @@ void MyLora::sendPacket(String message){
     LoRa.beginPacket();
     LoRa.print(message);
     LoRa.endPacket();
+    LoRa.receive();
 
     Serial.println("LoRa sent : " + message);
 
@@ -66,6 +67,7 @@ void MyLora::sendPacketStruct(GPSData &gpsData){
     LoRa.beginPacket();
     LoRa.write((uint8_t*)&gpsData, sizeof(gpsData));
     LoRa.endPacket();
+    LoRa.receive();
 
     Serial.println("Lora Send Struct");
 }

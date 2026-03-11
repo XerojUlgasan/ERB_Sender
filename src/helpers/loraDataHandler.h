@@ -17,6 +17,7 @@ void handleLoraReceivedData() {
     GPSData receivedData;
     
     if (lora.receivePacketStruct(receivedData)) {
+
         Serial.println("\n========== RECEIVED LoRa DATA ==========");
         Serial.print("Device ID: ");
         Serial.println(receivedData.device_id);
@@ -56,7 +57,6 @@ void handleLoraReceivedData() {
             *ptr = receivedData;
             enqueueLoraSend(ptr);
         }
-        lora.startReceive();
     }
 }
 
