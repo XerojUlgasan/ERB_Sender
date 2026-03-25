@@ -30,7 +30,7 @@ void MyGps::getLocation() {
     int bytesAvailable = 0;
     while (GPS.available()) {
         char c = GPS.read();
-        // Serial.print(c);  // Debug: Print raw NMEA sentences (GPGGA, GPRMC, etc.)
+        Serial.print(c);  // Debug: Print raw NMEA sentences (GPGGA, GPRMC, etc.)
         gps.encode(c);
         bytesAvailable++;
     }

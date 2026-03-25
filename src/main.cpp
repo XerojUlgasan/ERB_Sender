@@ -132,6 +132,7 @@ void loop() {
   // Continuously read GPS data to keep TinyGPS++ buffer updated
   // gps.getLocation();
   
-  delay(100);  // Small delay to prevent tight loop
+  gps.getLocation();
+  delay(1000);  // Small delay to prevent tight loop
   // clickHandler();
 }
