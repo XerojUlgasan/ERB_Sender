@@ -238,4 +238,6 @@ void loop() {
   // // clickHandler();
 
   sendDummyLoraData();
+
+  delay(1000);
 }
