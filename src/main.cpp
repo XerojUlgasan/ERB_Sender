@@ -171,22 +171,22 @@ void loraRelayTask(void *pvParameters) {
 void setup() {
   esp_task_wdt_init(15, true);
 
-  WiFi.mode(WIFI_AP_STA);
+  // WiFi.mode(WIFI_AP_STA);
   
   // WiFi.begin("Ulgasan", "XerojHaha123?");
-  WiFi.softAP(device_id, "Malopit123");
+  // WiFi.softAP(device_id, "Malopit123");
   Serial.begin(115200);
   
   // Start WiFi auto-connect task (runs in background)
-  startWifiAutoConnect(pref);
+  // startWifiAutoConnect(pref);
 
-  if(initializeWebServer(deviceIsSender, pref)){
-    Serial.println("Setup Done!");
-  }else{
-    Serial.println("Setup Failed!");
-    ESP.restart();
-  } 
-  Serial.println("ASDWADASD");
+  // if(initializeWebServer(deviceIsSender, pref)){
+  //   Serial.println("Setup Done!");
+  // }else{
+  //   Serial.println("Setup Failed!");
+  //   ESP.restart();
+  // } 
+  // Serial.println("ASDWADASD");
   
   gps.begin();
   lora.begin();
