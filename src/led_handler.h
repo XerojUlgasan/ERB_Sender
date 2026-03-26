@@ -3,11 +3,12 @@
 #include "./initializePins.h"
 #include "./class/myGps/MyGps.h"
 
-
+extern const bool deviceIsSender;
 extern bool web_server_running;
 extern bool lora_sending;
 extern bool lora_receiving;
 extern MyGps gps;
+extern Preferences pref;
 
 void wifiLed();
 void webserverLed();
@@ -24,19 +25,33 @@ void startLeds() {
 
 void wifiLed() {
     digitalWrite(wifi_led, (WiFi.status() == WL_CONNECTED) ? HIGH : LOW);
-    Serial.println("WIFI IS ON!!!!");
     return;
 };
 
 void webserverLed() {
+    static int lastToggleState = -1;
+    const int currentToggleState = digitalRead(toggle_web_server);
+
+    if (currentToggleState == lastToggleState) {
+        return;
+    }
+
+    if (currentToggleState == HIGH) {
+        startWebserver(deviceIsSender, pref);
+        WiFi.softAP(device_id, "Malopit123");
+    } else {
+        stopWebServer();
+        WiFi.mode(WIFI_STA);
+    }
+
+    lastToggleState = currentToggleState;
+
     digitalWrite(webserver_led, (web_server_running) ? HIGH : LOW);
-    Serial.println("WEBSERVER IS ON!!!!");
     return;
 };
 
 void gpsLed() {
     digitalWrite(gps_led, (gps.getGpsValidity()) ? HIGH : LOW);
-    Serial.println("GPS IS ON!!!!");
     return;
 }
 

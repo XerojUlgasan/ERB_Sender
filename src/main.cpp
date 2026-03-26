@@ -89,7 +89,7 @@ void enqueueLoraSend(GPSData *dataPtr) {
 void setup() {
   esp_task_wdt_init(15, true);
 
-  WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_STA);
   initializePins();
   
   // WiFi.begin("Ulgasan", "XerojHaha123?");
@@ -99,7 +99,7 @@ void setup() {
   // Start WiFi auto-connect task (runs in background)
   // startWifiAutoConnect(pref);
 
-  startWebserver(device_id, pref); // start web server
+  // startWebserver(device_id, pref); // start web server
   
   gps.begin();
   lora.begin();
@@ -152,9 +152,8 @@ void loop() {
   handleLoraReceivedData();
   
   // Continuously read GPS data to keep TinyGPS++ buffer updated
-  gps.getLocation();
-  
   // gps.getLocation();
-  delay(1000);  // Small delay to prevent tight loop
+  // gps.getLocation();
+  delay(50);  // Small delay to prevent tight loop
   // clickHandler();
 }

@@ -24,9 +24,12 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
   try
   {
 
+    static bool routesRegistered = false;
+
     Serial.println(sender.toJsonString(device_id));
-  
-    server.on( // TYPE
+    
+    if (!routesRegistered) {
+      server.on( // TYPE
       "/type", 
       HTTP_GET, 
       [deviceIsSender, &pref](AsyncWebServerRequest *request) {
@@ -469,6 +472,9 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
         }
       );
 
+      routesRegistered = true;
+    }
+
     server.begin();
     
   }
@@ -483,17 +489,29 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
 }
 
 void stopWebServer() {
-  server.end();
-  
-  web_server_running = false; // set flag
+  if (!web_server_running) {
+    return;
+  }
 
+  server.end();
+
+  web_server_running = false;
+  Serial.println("Web server stopped...");
   return;
 }
 
 void startWebserver(bool deviceIsSender, Preferences& pref) {
-  web_server_running = initializeWebServer(deviceIsSender, pref); // set flags
-  
-  if(web_server_running) Serial.println("Web server runing...");
+  if (web_server_running) {
+    return;
+  }
+
+  web_server_running = initializeWebServer(deviceIsSender, pref);
+
+  if (web_server_running) {
+    Serial.println("Web server running...");
+  } else {
+    Serial.println("Web server failed to start.");
+  }
   
   return;
 }
