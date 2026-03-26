@@ -121,15 +121,15 @@ void setup() {
   }
 
   // Run LED status updates asynchronously
-  // xTaskCreatePinnedToCore(
-  //   ledTask,
-  //   "LedTask",
-  //   2048,
-  //   nullptr,
-  //   1,
-  //   nullptr,
-  //   1
-  // );
+  xTaskCreatePinnedToCore(
+    ledTask,
+    "LedTask",
+    2048,
+    nullptr,
+    1,
+    nullptr,
+    1
+  );
 
   delay(500);
   Serial.println(WiFi.localIP());

@@ -5,8 +5,8 @@
 
 #define button 32
 
-#define wifi_led 34
-#define webserver_led 35
+#define wifi_led 13
+#define webserver_led 12
 #define gps_led 33
 #define lora_s_led 25
 #define lora_r_led 27
