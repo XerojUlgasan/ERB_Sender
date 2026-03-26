@@ -4,6 +4,9 @@
 
 #include "MyLora.h"
 
+extern bool lora_sending;
+extern bool lora_receiving;
+
 String MyLora::receivedMessage = "";
 bool MyLora::packetReceived = false;
 GPSData MyLora::receivedGPSData = {};
@@ -44,11 +47,14 @@ void MyLora::begin() {
 void MyLora::sendPacket(String message){
 
     Serial.println("Sending packet...");
+    lora_sending = true;
 
     LoRa.beginPacket();
     LoRa.print(message);
     LoRa.endPacket();
     LoRa.receive();
+
+    lora_sending = false;
 
     Serial.println("LoRa sent : " + message);
 
@@ -57,6 +63,7 @@ void MyLora::sendPacket(String message){
 
 void MyLora::sendPacketStruct(GPSData &gpsData){
     Serial.println("Sending Struct....");
+    lora_sending = true;
 
     Preferences pref;
 
@@ -68,6 +75,8 @@ void MyLora::sendPacketStruct(GPSData &gpsData){
     LoRa.write((uint8_t*)&gpsData, sizeof(gpsData));
     LoRa.endPacket();
     LoRa.receive();
+
+    lora_sending = false;
 
     Serial.println("Lora Send Struct");
 }
@@ -91,6 +100,7 @@ bool MyLora::receivePacketStruct(GPSData &outData){
     
     outData = receivedGPSData;
     structPacketReceived = false;
+    lora_receiving = false;
     return true;
 }
 
@@ -111,6 +121,7 @@ void onReceive(int packetSize){
         if(bytesRead == sizeof(GPSData)) {
             memcpy(&MyLora::receivedGPSData, buffer, sizeof(GPSData));
             MyLora::structPacketReceived = true;
+            lora_receiving = true;
         }
     } else {
         // Fall back to string message

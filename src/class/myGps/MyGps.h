@@ -31,6 +31,7 @@ public:
     GPSData getGPSDataStuct(String device_id, int& ping_count, bool isClick, bool isCancellation, String emergency_id);
     void saveLocationToPreferences();
     void loadLocationFromPreferences();
+    bool getGpsValidity();
 };
 
 #endif

@@ -17,6 +17,7 @@
 #include "./class/myGps/MyGps.h"
 #include "class/myLora/MyLora.h"
 #include "./helpers/loraDataHandler.h"
+#include "./led_handler.h"
 
 
 //TODO : Proper sanitation in Senderprofile.setProfile
@@ -35,11 +36,23 @@ MyGps gps;
 MyLora lora(5, 14, 26);
 // SenderProfile sender;
 
+bool lora_sending = false;
+bool lora_receiving = false;
+bool web_server_running = false;
+
 IPAddress primaryDNS(1,1,1,1);      // Cloudflare
 IPAddress secondaryDNS(8,8,8,8);    // Google
 
 // Queue and task for asynchronous LoRa sending
 QueueHandle_t loraQueue = nullptr;
+
+void ledTask(void *pvParameters) {
+  (void)pvParameters;
+  for (;;) {
+    startLeds();
+    vTaskDelay(pdMS_TO_TICKS(20));
+  }
+}
 
 void loraTask(void *pvParameters) {
   (void)pvParameters;
@@ -77,21 +90,16 @@ void setup() {
   esp_task_wdt_init(15, true);
 
   WiFi.mode(WIFI_AP_STA);
+  initializePins();
   
   // WiFi.begin("Ulgasan", "XerojHaha123?");
   WiFi.softAP(device_id, "Malopit123");
   Serial.begin(115200);
   
   // Start WiFi auto-connect task (runs in background)
-  startWifiAutoConnect(pref);
+  // startWifiAutoConnect(pref);
 
-  if(initializeWebServer(deviceIsSender, pref)){
-    Serial.println("Setup Done!");
-  }else{
-    Serial.println("Setup Failed!");
-    ESP.restart();
-  } 
-  Serial.println("ASDWADASD");
+  startWebserver(device_id, pref); // start web server
   
   gps.begin();
   lora.begin();
@@ -112,6 +120,17 @@ void setup() {
     );
   }
 
+  // Run LED status updates asynchronously
+  // xTaskCreatePinnedToCore(
+  //   ledTask,
+  //   "LedTask",
+  //   2048,
+  //   nullptr,
+  //   1,
+  //   nullptr,
+  //   1
+  // );
+
   delay(500);
   Serial.println(WiFi.localIP());
 }
@@ -119,6 +138,9 @@ void setup() {
 #include "./helpers/clickHandler.h"
 
 void loop() {
+  // Keep LED updates running on main loop too (fallback/extra responsiveness)
+  // startLeds();
+
   pref.begin("secret");
   isRegistered = pref.getBool("hasUser");
 
@@ -130,9 +152,9 @@ void loop() {
   handleLoraReceivedData();
   
   // Continuously read GPS data to keep TinyGPS++ buffer updated
-  // gps.getLocation();
-  
   gps.getLocation();
+  
+  // gps.getLocation();
   delay(1000);  // Small delay to prevent tight loop
   // clickHandler();
 }

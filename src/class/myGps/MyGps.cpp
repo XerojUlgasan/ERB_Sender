@@ -205,3 +205,7 @@ void MyGps::loadLocationFromPreferences() {
     Serial.println("Previous LAT: " + (String)lat);
     Serial.println("Previous LON: " + (String)lon);
 }
+
+bool MyGps::getGpsValidity() {
+    return gps.location.isValid();
+}
