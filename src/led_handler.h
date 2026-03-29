@@ -46,7 +46,7 @@ void webserverLed() {
 
     lastToggleState = currentToggleState;
 
-    // startWebserver(deviceIsSender, pref); // PANG TESTING NI ERNITS WAG AALISIN
+    startWebserver(deviceIsSender, pref); // PANG TESTING NI ERNITS WAG AALISIN
 
     digitalWrite(webserver_led, (web_server_running) ? HIGH : LOW);
     return;

@@ -279,7 +279,7 @@ bool SenderProfile::uploadToAPI(String deviceId) {
         
             return true;
         }
-        
+                
         return statusCode >= 200 && statusCode < 300;
     }
     http.end();
