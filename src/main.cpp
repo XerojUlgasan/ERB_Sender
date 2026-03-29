@@ -121,7 +121,7 @@ void setup() {
   xTaskCreatePinnedToCore(
     ledTask,
     "LedTask",
-    2048,
+    6144,
     nullptr,
     1,
     nullptr,
