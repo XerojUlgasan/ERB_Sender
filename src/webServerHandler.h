@@ -356,7 +356,6 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
           String pass = json["password"].as<String>();
           bool isSave = json["isSave"].as<bool>();
 
-          WiFi.mode(WIFI_AP_STA);
           WiFi.begin(ssid, pass);
 
           int timeout = 10000; 
