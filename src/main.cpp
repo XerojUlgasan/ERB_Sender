@@ -93,7 +93,6 @@ void setup() {
   initializePins();
   
   // WiFi.begin("Ulgasan", "XerojHaha123?");
-  WiFi.softAP(device_id, "Malopit123");
   Serial.begin(115200);
   
   // Start WiFi auto-connect task (runs in background)

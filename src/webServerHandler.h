@@ -494,13 +494,14 @@ void stopWebServer() {
   }
 
   server.end();
-
+  WiFi.mode(WIFI_STA);
   web_server_running = false;
   Serial.println("Web server stopped...");
   return;
 }
 
 void startWebserver(bool deviceIsSender, Preferences& pref) {
+  WiFi.softAP(device_id, "Malopit123");
   if (web_server_running) {
     return;
   }
