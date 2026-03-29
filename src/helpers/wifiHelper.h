@@ -15,12 +15,17 @@ const char* WIFI_SAVED_NETWORKS_KEY = "saved_networks";
 
 bool saveNetworkToPreferences(Preferences &pref, const String &ssid, const String &password, bool isSave) {
     if (!isSave) {
+        Serial.println("Save not allowed");
         return true;
     }
 
     if (ssid.isEmpty()) {
+        Serial.println("No SSID");
         return false;
     }
+
+    Serial.println("Initializing Save Network");
+
 
     pref.begin("secret");
     String storedNetworks = pref.getString(WIFI_SAVED_NETWORKS_KEY, "[]");

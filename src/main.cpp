@@ -96,7 +96,7 @@ void setup() {
   Serial.begin(115200);
   
   // Start WiFi auto-connect task (runs in background)
-  // startWifiAutoConnect(pref);
+  startWifiAutoConnect(pref);
   
   gps.begin();
   lora.begin();
