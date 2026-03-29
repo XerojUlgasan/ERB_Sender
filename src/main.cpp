@@ -97,8 +97,6 @@ void setup() {
   
   // Start WiFi auto-connect task (runs in background)
   // startWifiAutoConnect(pref);
-
-  // startWebserver(device_id, pref); // start web server
   
   gps.begin();
   lora.begin();
