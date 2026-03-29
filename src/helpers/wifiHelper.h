@@ -4,11 +4,58 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <vector>
+#include <ArduinoJson.h>
 #include <esp_netif.h>
 #include <lwip/ip_addr.h>
 
 extern IPAddress primaryDNS;
 extern IPAddress secondaryDNS;
+
+const char* WIFI_SAVED_NETWORKS_KEY = "saved_networks";
+
+bool saveNetworkToPreferences(Preferences &pref, const String &ssid, const String &password, bool isSave) {
+    if (!isSave) {
+        return true;
+    }
+
+    if (ssid.isEmpty()) {
+        return false;
+    }
+
+    pref.begin("secret");
+    String storedNetworks = pref.getString(WIFI_SAVED_NETWORKS_KEY, "[]");
+
+    JsonDocument doc;
+    DeserializationError parseError = deserializeJson(doc, storedNetworks);
+    if (parseError || !doc.is<JsonArray>()) {
+        doc.clear();
+        doc.to<JsonArray>();
+    }
+
+    JsonArray networks = doc.as<JsonArray>();
+    bool updatedExisting = false;
+
+    for (JsonObject network : networks) {
+        if (network["ssid"].as<String>() == ssid) {
+            network["password"] = password;
+            updatedExisting = true;
+            break;
+        }
+    }
+
+    if (!updatedExisting) {
+        JsonObject added = networks.createNestedObject();
+        added["ssid"] = ssid;
+        added["password"] = password;
+    }
+
+    String output;
+    serializeJson(doc, output);
+    pref.putString(WIFI_SAVED_NETWORKS_KEY, output);
+    pref.end();
+
+    return true;
+}
 
 void forceStaDns(IPAddress primary, IPAddress secondary) {
     esp_netif_t* sta = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
@@ -70,7 +117,7 @@ bool autoConnectToSavedNetworks(Preferences &pref) {
     
     // Read saved networks from preferences
     pref.begin("secret", true);
-    String storedNetworks = pref.getString("saved_networks", "[]");
+    String storedNetworks = pref.getString(WIFI_SAVED_NETWORKS_KEY, "[]");
     pref.end();
     
     JsonDocument savedDoc;

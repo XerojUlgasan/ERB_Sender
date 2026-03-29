@@ -351,7 +351,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
       server.on(
         "/setNetwork",
         HTTP_POST,
-        [](AsyncWebServerRequest *request, JsonVariant &json){
+        [&pref](AsyncWebServerRequest *request, JsonVariant &json){
           String ssid = json["ssid"].as<String>();
           String pass = json["password"].as<String>();
           bool isSave = json["isSet"].as<bool>();
@@ -377,6 +377,11 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
           serializeJson(doc, jsonString);
           
           if (WiFi.status() == WL_CONNECTED) {
+            if (!saveNetworkToPreferences(pref, ssid, pass, isSave)) {
+              request->send(400, "application/json", "{\"error\":\"Invalid SSID for saving\"}");
+              return;
+            }
+
             forceStaDns(primaryDNS, secondaryDNS);
             Serial.println("Connected!");
             request->send(200, "application/json", jsonString);
