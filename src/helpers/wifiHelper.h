@@ -54,6 +54,8 @@ bool saveNetworkToPreferences(Preferences &pref, const String &ssid, const Strin
     pref.putString(WIFI_SAVED_NETWORKS_KEY, output);
     pref.end();
 
+    Serial.println("Network is saved : " + ssid);
+
     return true;
 }
 
