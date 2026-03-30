@@ -40,7 +40,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
         "application/json",
         json);
 
-        Serial.println(sender.toJsonString(device_id));
+        // Serial.println(sender.toJsonString(device_id));
     });
 
     server.on(
@@ -425,9 +425,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
         HTTP_POST,
         [](AsyncWebServerRequest *request) {
           Serial.printf("Free heap before HTTPS: %d bytes\n", ESP.getFreeHeap());
-          
-          // Give WiFi connection time to stabilize
-          delay(500);
+        
           
           if(WiFi.status() != WL_CONNECTED){
             Serial.println("WiFi not connected during confirmRegistration!");
