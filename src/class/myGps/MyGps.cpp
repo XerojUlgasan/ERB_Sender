@@ -41,9 +41,14 @@ void MyGps::getLocation() {
         Serial.print("\nRead ");
         Serial.print(bytesAvailable);
         Serial.println(" bytes from GPS");
+
+        Serial.println(gps.time.hour());
+        Serial.println(gps.time.minute());
+        Serial.println(gps.time.second());
+        Serial.println(gps.satellites.value());
     }
 
-    if(gps.location.isUpdated()){
+    // if(gps.location.isUpdated()){
         Serial.print("\nLatitude: ");
         Serial.println(gps.location.lat(), 6);
 
@@ -78,7 +83,7 @@ void MyGps::getLocation() {
         if (isLocValid) {
             saveLocationToPreferences();
         }
-    }
+    // }
 
     return;
 }
