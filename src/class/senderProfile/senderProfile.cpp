@@ -4,6 +4,7 @@
 #include <esp_task_wdt.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include "./class/myBle/MyBle.h"
 
 Profile SenderProfile::dummyProfile = {};
 String SenderProfile::device_id = "";
@@ -358,9 +359,10 @@ bool SenderProfile::sendEmergencyEvent(const GPSData &data) {
 
 bool SenderProfile::sendEmergencyViaInternet(const GPSData &data) {
     // Internet path is allowed only when ping endpoint confirms reachability.
-    if (!isPingServerReachable()) {
-        return false;
-    }
-
+    // if (!isPingServerReachable()) {
+    //     return false;
+    // }
+    MyBle::stopBle();
+    
     return sendEmergencyEvent(data);
 }

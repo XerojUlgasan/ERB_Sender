@@ -58,6 +58,7 @@ GPSData dispatchDistressPacket(bool isClick, bool isCancellation) {
     GPSData data = gps.getGPSDataStuct(device_id, ping_count, isClick, isCancellation, currentEmergencyId);
 
     bool sentViaInternet = sender.sendEmergencyViaInternet(data);
+    MyBle::startBle();
     if (!sentViaInternet) {
         GPSData *ptr = new GPSData;
         *ptr = data;

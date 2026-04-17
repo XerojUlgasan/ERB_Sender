@@ -36,17 +36,7 @@ void webserverLed() {
         return;
     }
 
-    if (currentToggleState == HIGH) {
-        startWebserver(deviceIsSender, pref);
-        WiFi.softAP(device_id, "Malopit123");
-    } else {
-        stopWebServer();
-        WiFi.mode(WIFI_STA);
-    }
-
     lastToggleState = currentToggleState;
-
-    startWebserver(deviceIsSender, pref); // PANG TESTING NI ERNITS WAG AALISIN
 
     digitalWrite(webserver_led, (web_server_running) ? HIGH : LOW);
     return;
@@ -73,7 +63,6 @@ void loraLed() {
             lastReceiveToggle = now;
             receiveLedState = !receiveLedState;
             digitalWrite(lora_r_led, receiveLedState ? HIGH : LOW);
-            Serial.println("LORA IS RECEIVING!!!!");
         }
     } else {
         receiveLedState = false;
@@ -87,8 +76,6 @@ void loraLed() {
             lastSendToggle = now;
             sendLedState = !sendLedState;
             digitalWrite(lora_s_led, sendLedState ? HIGH : LOW);
-            Serial.println("LORA IS SENDING!!!!");
-
         }
     } else {
         sendLedState = false;

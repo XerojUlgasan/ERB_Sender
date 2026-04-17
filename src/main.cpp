@@ -26,6 +26,11 @@
 //TODO : Encryption key generation
 //TODO : Encryption key and user recording to cloud database
 
+// #include <BluetoothSerial.h>
+// BluetoothSerial bt;
+#include "./class/myBle/MyBle.h"
+MyBle myBle;
+
 const bool deviceIsSender = true;
 const String device_id = "ERBriwan-001";
 bool isRegistered= false;
@@ -45,6 +50,18 @@ IPAddress secondaryDNS(8,8,8,8);    // Google
 
 // Queue and task for asynchronous LoRa sending
 QueueHandle_t loraQueue = nullptr;
+
+void listenToWebserverToggleSwitch() {
+    if (digitalRead(toggle_web_server) == HIGH && web_server_running == false) {
+        startWebserver(deviceIsSender, pref);
+    }
+    
+    if (digitalRead(toggle_web_server) == LOW && web_server_running == true){
+        stopWebServer();
+    }
+
+    // startWebserver(deviceIsSender, pref);
+}
 
 void ledTask(void *pvParameters) {
   (void)pvParameters;
@@ -97,10 +114,13 @@ void setup() {
   
   // Start WiFi auto-connect task (runs in background)
   startWifiAutoConnect(pref);
-  
+  startWebserver(deviceIsSender, pref);
+
   gps.begin();
   lora.begin();
   lora.startReceive();
+  // bt.begin(device_id);
+  myBle.begin(device_id);
   sender.device_id = device_id;
 
   // Create queue and LoRa sender task
@@ -121,7 +141,7 @@ void setup() {
   xTaskCreatePinnedToCore(
     ledTask,
     "LedTask",
-    6144,
+    1024,
     nullptr,
     1,
     nullptr,
@@ -148,8 +168,21 @@ void loop() {
   // Handle incoming LoRa packets from other senders
   handleLoraReceivedData();
   
+  // #pragma region FOR BLUETOOTH
+  // if(bt.hasClient()){
+  //   Serial.println("HAS CLIENT");
+  // }
+
+  // if(bt.available()){
+  //   char incoming = bt.read();
+  //   Serial.print(incoming);
+  // }
+  // #pragma endregion
+
+  // listenToWebserverToggleSwitch(); // UN COMMENT IF DEPLOY, COMMENT OUT ONLY FOR ERNITS
+
   // Continuously read GPS data to keep TinyGPS++ buffer updated
-  gps.getLocation();
-  delay(500);  // Small delay to prevent tight loop
+  // gps.getLocation();
+  delay(20);  // Small delay to prevent tight loop
   // clickHandler();
 }

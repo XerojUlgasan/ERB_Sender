@@ -26,7 +26,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
 
     static bool routesRegistered = false;
 
-    Serial.println(sender.toJsonString(device_id));
+    // Serial.println(sender.toJsonString(device_id));
     
     if (!routesRegistered) {
       server.on( // TYPE
