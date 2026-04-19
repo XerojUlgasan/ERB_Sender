@@ -28,8 +28,8 @@
 
 // #include <BluetoothSerial.h>
 // BluetoothSerial bt;
-#include "./class/myBle/MyBle.h"
-MyBle myBle;
+// #include "./class/myBle/MyBle.h"
+// MyBle myBle;
 
 const bool deviceIsSender = true;
 const String device_id = "ERBriwan-001";
@@ -120,7 +120,7 @@ void setup() {
   lora.begin();
   lora.startReceive();
   // bt.begin(device_id);
-  myBle.begin(device_id);
+  // myBle.begin(device_id);
   sender.device_id = device_id;
 
   // Create queue and LoRa sender task
