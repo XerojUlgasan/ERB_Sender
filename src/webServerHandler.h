@@ -354,7 +354,7 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
         [&pref](AsyncWebServerRequest *request, JsonVariant &json){
           String ssid = json["ssid"].as<String>();
           String pass = json["password"].as<String>();
-          bool isSave = json["isSave"].as<bool>();
+          bool isSave = json["isSet"].as<bool>();
 
           WiFi.begin(ssid, pass);
 
