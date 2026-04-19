@@ -53,17 +53,70 @@ const unsigned long FOLLOW_PING_INTERVAL  = 10000UL;  // gap between follow ping
 const unsigned long CANCELLATION_INTERVAL = 10000UL;  // gap between cancellation packets (10s)
 const int CANCELLATION_REPEAT_COUNT       = 15;       // send cancellation 15 times
 
+// Emergency indicator timing constants (ms)
+const unsigned long LONG_PRESS_BLINK_INTERVAL   = 1000UL; // 1 second
+const unsigned long CANCELLATION_BLINK_INTERVAL = 300UL;  // 0.3 second
+const unsigned long TRIPLE_CLICK_LATCH_MS       = 1500UL; // keep HIGH briefly after 3-click trigger
+
+bool emergencyDispatchInProgress = false;
+bool emergencyTripleClickDetected = false;
+unsigned long emergencyTripleClickUntil = 0;
+
+void updateEmergencyIndicator(unsigned long now, bool currBtnState) {
+    static unsigned long lastBlinkToggle = 0;
+    static bool blinkState = false;
+
+    // Cancellation state indication has highest priority.
+    if (cancellationActive) {
+        if ((now - lastBlinkToggle) >= CANCELLATION_BLINK_INTERVAL) {
+            lastBlinkToggle = now;
+            blinkState = !blinkState;
+            digitalWrite(emegency_indicator, blinkState ? HIGH : LOW);
+        }
+        return;
+    }
+
+    // While user is holding to initiate cancellation, blink every 1s.
+    if (sosActive && currBtnState && pressStartTime > 0 && !longPressHandled) {
+        if ((now - lastBlinkToggle) >= LONG_PRESS_BLINK_INTERVAL) {
+            lastBlinkToggle = now;
+            blinkState = !blinkState;
+            digitalWrite(emegency_indicator, blinkState ? HIGH : LOW);
+        }
+        return;
+    }
+
+    // Active emergency session stays HIGH unless overridden by blink modes above.
+    if (sosActive) {
+        digitalWrite(emegency_indicator, HIGH);
+        return;
+    }
+
+    // Dispatch execution or recent 3-click trigger keeps indicator HIGH.
+    if (emergencyDispatchInProgress || emergencyTripleClickDetected || now <= emergencyTripleClickUntil) {
+        digitalWrite(emegency_indicator, HIGH);
+        return;
+    }
+
+    blinkState = false;
+    digitalWrite(emegency_indicator, LOW);
+}
+
 // Build distress payload once, try internet first, fallback to LoRa if internet path is unavailable.
 GPSData dispatchDistressPacket(bool isClick, bool isCancellation) {
+    emergencyDispatchInProgress = true;
+    digitalWrite(emegency_indicator, HIGH);
     GPSData data = gps.getGPSDataStuct(device_id, ping_count, isClick, isCancellation, currentEmergencyId);
 
     bool sentViaInternet = sender.sendEmergencyViaInternet(data);
-    MyBle::startBle();
+    // MyBle::startBle();
     if (!sentViaInternet) {
         GPSData *ptr = new GPSData;
         *ptr = data;
         enqueueLoraSend(ptr);
     }
+
+    emergencyDispatchInProgress = false;
 
     return data;
 }
@@ -108,6 +161,8 @@ void clickHandler() {
             currentEmergencyId = "";  // Clear emergency ID
         }
     }
+
+    emergencyTripleClickDetected = false;
 
     // While SOS or cancellation is active, ignore new click sequences
     // (but we still monitor for long press to start cancellation when SOS is active).
@@ -164,6 +219,8 @@ void clickHandler() {
 
             if (clickCount >= 3 && (now - firstClickTime) <= TRIPLE_CLICK_WINDOW) {
                 Serial.println("3 clicks detected! Starting SOS pings...");
+                emergencyTripleClickDetected = true;
+                emergencyTripleClickUntil = now + TRIPLE_CLICK_LATCH_MS;
                 
                 // Generate new emergency ID for this SOS session
                 currentEmergencyId = generateEmergencyId();
@@ -187,6 +244,8 @@ void clickHandler() {
             }
         }
     }
+
+    updateEmergencyIndicator(now, currBtnState);
 
     lastBtnState = currBtnState;
 }

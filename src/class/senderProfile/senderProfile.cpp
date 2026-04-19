@@ -362,7 +362,7 @@ bool SenderProfile::sendEmergencyViaInternet(const GPSData &data) {
     // if (!isPingServerReachable()) {
     //     return false;
     // }
-    MyBle::stopBle();
+    // MyBle::stopBle();
     
     return sendEmergencyEvent(data);
 }

@@ -10,7 +10,8 @@
 #define wifi_led 13 // GREEN
 #define gps_led 33 // GREEN
 #define lora_s_led 25 // YELLOW
-#define lora_r_led 27 //YELLOW
+#define emegency_indicator 27 //YELLOW
+
 
 void initializePins() {
     
@@ -22,7 +23,7 @@ void initializePins() {
 
     pinMode(gps_led, OUTPUT);
     pinMode(lora_s_led, OUTPUT);
-    pinMode(lora_r_led, OUTPUT);
+    pinMode(emegency_indicator, OUTPUT);
 
     return;
 }

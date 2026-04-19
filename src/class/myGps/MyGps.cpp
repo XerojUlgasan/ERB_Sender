@@ -212,5 +212,9 @@ void MyGps::loadLocationFromPreferences() {
 }
 
 bool MyGps::getGpsValidity() {
+    while (GPS.available()) {
+        char c = GPS.read();
+        gps.encode(c);
+    }
     return gps.location.isValid();
 }

@@ -62,11 +62,11 @@ void loraLed() {
         if (now - lastReceiveToggle >= interval) {
             lastReceiveToggle = now;
             receiveLedState = !receiveLedState;
-            digitalWrite(lora_r_led, receiveLedState ? HIGH : LOW);
+            digitalWrite(lora_s_led, receiveLedState ? HIGH : LOW);
         }
     } else {
         receiveLedState = false;
-        digitalWrite(lora_r_led, LOW);
+        digitalWrite(lora_s_led, LOW);
     }
 
     if (lora_sending) {

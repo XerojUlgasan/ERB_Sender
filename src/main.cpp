@@ -165,8 +165,11 @@ void loop() {
 
   pref.end();
   
-  // Handle incoming LoRa packets from other senders
-  handleLoraReceivedData();
+  // Disable LoRa listening while this device is in an active emergency flow.
+  if (!sosActive && !cancellationActive) {
+    // Handle incoming LoRa packets from other senders
+    handleLoraReceivedData();
+  }
   
   // #pragma region FOR BLUETOOTH
   // if(bt.hasClient()){
@@ -183,6 +186,6 @@ void loop() {
 
   // Continuously read GPS data to keep TinyGPS++ buffer updated
   // gps.getLocation();
-  delay(20);  // Small delay to prevent tight loop
+  delay(50);  // Small delay to prevent tight loop
   // clickHandler();
 }

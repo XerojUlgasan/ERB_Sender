@@ -14,9 +14,9 @@
 class MyGps
 {
 private:
-    TinyGPSPlus gps;
-    HardwareSerial& GPS;
 public:
+    HardwareSerial& GPS;
+    TinyGPSPlus gps;
     double lon, lat, alt, spd;
     uint32_t sat;
     bool isLocValid, isAltValid, isSpdValid;
