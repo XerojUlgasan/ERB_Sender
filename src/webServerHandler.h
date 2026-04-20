@@ -421,6 +421,34 @@ bool initializeWebServer(bool deviceIsSender, Preferences& pref) {
       );
 
       server.on(
+        "/disconnectNetwork",
+        HTTP_POST,
+        [](AsyncWebServerRequest *request) {
+          bool wasConnected = WiFi.status() == WL_CONNECTED;
+          String previousSsid = wasConnected ? WiFi.SSID() : "Not Connected";
+
+          if (wasConnected) {
+            WiFi.disconnect();
+
+            int timeoutMs = 2000;
+            int elapsedMs = 0;
+            while (WiFi.status() == WL_CONNECTED && elapsedMs < timeoutMs) {
+              delay(50);
+              elapsedMs += 50;
+            }
+          }
+
+          JsonDocument doc;
+          doc["wasConnected"] = wasConnected;
+          WiFi.disconnect();
+
+          String jsonString;
+
+          request->send(200, "application/json", jsonString);
+        }
+      );
+
+      server.on(
         "/confirmRegistration",
         HTTP_POST,
         [](AsyncWebServerRequest *request) {
