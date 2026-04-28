@@ -32,9 +32,10 @@
 // MyBle myBle;
 
 const bool deviceIsSender = true;
-const String device_id = "ERBriwan-001";
+const String device_id = "ERBriwan-002";
 bool isRegistered= false;
 int ping_count = 0;
+uint8_t max_bounce = 5;
 
 Preferences pref;
 MyGps gps;
