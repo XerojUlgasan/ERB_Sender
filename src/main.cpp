@@ -114,6 +114,8 @@ void enqueueLoraSend(GPSData *dataPtr) {
 }
 
 GPSData dummy;
+int ping = 10;
+uint8_t bounce = 5;
 
 void sendDummyLoraData() {
   
@@ -128,7 +130,8 @@ void sendDummyLoraData() {
   dummy.isLocValid = true;
   dummy.isAltValid = true;
   dummy.isSpdValid = true;
-  dummy.ping_count++;
+  dummy.ping_count = ping ;
+  dummy.bounce = bounce;
   
   Serial.println("Sending dummy LoRa data...");
   lora.sendPacketStruct(dummy);
